@@ -50,7 +50,9 @@ bool Check::password(const std::string &str) {
   return true;
 }
 
-bool Check::name(const std::string &str) {}
+bool Check::name(const std::string &str) {
+  return str.size() >= 6 && str.size() <= 15 && (str.size() % 3 == 0);
+}
 
 bool Check::mail(const std::string &str) {
   auto check = [](char ch) {
@@ -82,4 +84,6 @@ bool Check::mail(const std::string &str) {
 
 bool Check::trainID(const std::string &str) { return username(str); }
 
-bool Check::station(const std::string &str) {}
+bool Check::station(const std::string &str) {
+  return str.size() >= 3 && str.size() <= 30 && (str.size() % 3 == 0);
+}

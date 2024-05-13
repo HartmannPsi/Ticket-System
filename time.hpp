@@ -2,7 +2,7 @@
 #ifndef TIME_HPP
 #define TIME_HPP
 
-#include <stdint.h>
+#include <cstdint>
 
 constexpr long long HOUR = 60, DAY = 24 * HOUR;
 

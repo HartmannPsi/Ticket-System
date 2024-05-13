@@ -11,9 +11,9 @@
 
 using u32 = unsigned long;
 
-constexpr int M = 101; // M should be odd (101)
+constexpr int M = 203; // M should be odd (101)
 constexpr u32 BLOCK = 4096 * 2;
-constexpr int CACHE_SIZE = 4096 * 2;
+constexpr int CACHE_SIZE = 2048;
 
 template <typename Key> class BPlusTree {
 
@@ -162,11 +162,11 @@ public:
 
   ~BPlusTree();
 
-  void insert(const Key &ind);
+  bool insert(const Key &ind);
 
-  void erase(const Key &ind);
+  bool erase(const Key &ind);
 
-  void find(const Key &ind);
+  u32 find(const Key &ind);
 
   void traverse();
 
@@ -245,6 +245,7 @@ template <typename Key> BPlusTree<Key>::~BPlusTree() {
     const u32 &tmp = ind_pool.top();
     ind_rec.seekp(i);
     ind_rec.write(reinterpret_cast<const char *>(&tmp), sizeof(u32));
+    // i += sizeof(u32);
   }
 
   ind_file.close();
@@ -277,7 +278,7 @@ template <typename Key> void BPlusTree<Key>::rec_node(u32 pos) {
   ind_pool.push_front(pos);
 }
 
-template <typename Key> void BPlusTree<Key>::insert(const Key &ind) {
+template <typename Key> bool BPlusTree<Key>::insert(const Key &ind) {
   Node node[8];
   u32 pos[8];
   int child[8];
@@ -301,12 +302,16 @@ template <typename Key> void BPlusTree<Key>::insert(const Key &ind) {
     }
   }
 
+  int tmp = lower_bound(node[i].index, node[i].size, ind);
+  if (node[i].size > 0 && tmp < node[i].size && node[i].index[tmp] == ind) {
+    return false;
+  }
+
   if (node[i].size == 0) { // root
     node[i].index[0] = ind;
     ++node[i].size;
     write_node(node[i], pos[i]);
-    return;
-
+    return true;
   } else if (node[i].size < M - 1) { // trivial
     if (node[i].index[node[i].size - 1] <= ind) {
       node[i].index[node[i].size] = ind;
@@ -320,7 +325,7 @@ template <typename Key> void BPlusTree<Key>::insert(const Key &ind) {
       ++node[i].size;
     }
     write_node(node[i], pos[i]);
-    return;
+    return true;
   }
   // split leaves
 
@@ -350,6 +355,8 @@ template <typename Key> void BPlusTree<Key>::insert(const Key &ind) {
 
   insert_internal(node, i - 1, child, pos, new_node_pos,
                   node[i].index[node[i].size - 1]);
+
+  return true;
 }
 
 template <typename Key>
@@ -455,7 +462,7 @@ template <typename Key> int BPlusTree<Key>::count(const Key &ind) {
   return 1;
 }
 
-template <typename Key> void BPlusTree<Key>::erase(const Key &ind) {
+template <typename Key> bool BPlusTree<Key>::erase(const Key &ind) {
   Node node[8];
   u32 pos[8];
   int child[8];
@@ -480,16 +487,16 @@ template <typename Key> void BPlusTree<Key>::erase(const Key &ind) {
   }
 
   if (i == 0 && node[i].size == 0) {
-    return;
+    return false;
   }
 
   if (ind > node[i].index[node[i].size - 1]) {
-    return;
+    return false;
   }
   int _pos = lower_bound(node[i].index, node[i].size, ind);
 
   if (node[i].index[_pos] != ind) {
-    return;
+    return false;
   }
 
   for (int j = _pos; j != node[i].size - 1; ++j) {
@@ -499,7 +506,7 @@ template <typename Key> void BPlusTree<Key>::erase(const Key &ind) {
 
   if (node[i].size >= M / 2 || i == 0) { // node == root OR node size > 50
     write_node(node[i], pos[i]);
-    return;
+    return true;
   }
 
   if (child[i] == 0) { // the first son of the father, only right brother
@@ -518,7 +525,7 @@ template <typename Key> void BPlusTree<Key>::erase(const Key &ind) {
       write_node(node[i], pos[i]);
       write_node(node[i - 1], pos[i - 1]);
       write_node(rt_bro, node[i - 1].child[1]);
-      return;
+      return true;
 
     } else { // merge with right brother
       rec_node(node[i - 1].child[1]);
@@ -560,7 +567,7 @@ template <typename Key> void BPlusTree<Key>::erase(const Key &ind) {
       write_node(node[i], pos[i]);
       write_node(node[i - 1], pos[i - 1]);
       write_node(lt_bro, node[i - 1].child[node[i - 1].size - 1]);
-      return;
+      return true;
 
     } else { // merge with left brother
       rec_node(pos[i]);
@@ -596,7 +603,7 @@ template <typename Key> void BPlusTree<Key>::erase(const Key &ind) {
       write_node(node[i], pos[i]);
       write_node(node[i - 1], pos[i - 1]);
       write_node(rt_bro, node[i - 1].child[child[i] + 1]);
-      return;
+      return true;
     }
 
     read_node(lt_bro, node[i - 1].child[child[i] - 1]);
@@ -613,7 +620,7 @@ template <typename Key> void BPlusTree<Key>::erase(const Key &ind) {
       write_node(node[i], pos[i]);
       write_node(node[i - 1], pos[i - 1]);
       write_node(lt_bro, node[i - 1].child[child[i] - 1]);
-      return;
+      return true;
     }
 
     // merge with right brother
@@ -636,6 +643,8 @@ template <typename Key> void BPlusTree<Key>::erase(const Key &ind) {
     // merge internal nodes
     merge_internal(node, i - 1, child, pos);
   }
+
+  return true;
 }
 
 template <typename Key>
@@ -818,13 +827,13 @@ void BPlusTree<Key>::merge_internal(Node node[], int i, int child[],
   }
 }
 
-template <typename Key> void BPlusTree<Key>::find(const Key &ind) {
+template <typename Key> u32 BPlusTree<Key>::find(const Key &ind) {
   Node node;
   read_node(node, root);
 
   if (node.is_leaf && node.size == 0) {
-    std::cout << "null\n";
-    return;
+    // std::cout << "null\n";
+    return INT32_MAX;
   }
 
   while (!node.is_leaf) {
@@ -837,15 +846,13 @@ template <typename Key> void BPlusTree<Key>::find(const Key &ind) {
     }
   }
 
-  bool flag = true;
-
   while (true) {
     int res = 0;
     for (int i = 0; i != node.size; ++i) {
       res = strcmp(ind.str, node.index[i].str);
       if (res == 0) {
-        flag = false;
-        std::cout << node.index[i].val << ' ';
+
+        return node.index[i].val;
       } else if (res < 0) {
         break;
       }
@@ -860,11 +867,7 @@ template <typename Key> void BPlusTree<Key>::find(const Key &ind) {
     read_node(node, node.next);
   }
 
-  if (flag) {
-    std::cout << "null\n";
-  } else {
-    std::cout << '\n';
-  }
+  return INT32_MAX;
 }
 
 template <typename Key> void BPlusTree<Key>::traverse() {
@@ -932,5 +935,93 @@ int upper_bound(const Key *const beg, int size, const Key &index) {
   }
   return start;
 }
+
+struct Index {
+  char str[22] = {};
+  u32 pos = 0;
+
+  Index(const std::string &s, int n) : pos(n) { strcpy(str, s.c_str()); }
+
+  Index() {}
+
+  ~Index() {}
+
+  Index &operator=(const Index &other) {
+    if (&other == this) {
+      return *this;
+    }
+    strcpy(str, other.str);
+    pos = other.pos;
+
+    return *this;
+  }
+
+  bool operator==(const Index &other) const {
+    const auto &res = strcmp(str, other.str);
+    return res == 0;
+  }
+
+  bool operator!=(const Index &other) const {
+    const auto &res = strcmp(str, other.str);
+    return res != 0 || pos != other.pos;
+  }
+
+  bool operator>(const Index &other) const {
+    const auto &res = strcmp(str, other.str);
+    if (res != 0)
+      return res > 0;
+    else
+      return pos > other.pos;
+  }
+
+  bool operator<(const Index &other) const {
+    const auto &res = strcmp(str, other.str);
+    if (res != 0)
+      return res < 0;
+    else
+      return pos < other.pos;
+  }
+
+  bool operator>=(const Index &other) const {
+    const auto &res = strcmp(str, other.str);
+    if (res != 0)
+      return res > 0;
+    else
+      return pos >= other.pos;
+  }
+
+  bool operator<=(const Index &other) const {
+    const auto &res = strcmp(str, other.str);
+    if (res != 0)
+      return res < 0;
+    else
+      return pos <= other.pos;
+  }
+
+  friend std::istream &operator>>(std::istream &is, Index &obj) {
+    std::string s;
+    is >> s >> obj.pos;
+    strcpy(obj.str, s.c_str());
+    return is;
+  }
+
+  friend std::ostream &operator<<(std::ostream &os, const Index &obj) {
+    os << obj.str << ' ' << obj.pos;
+    return os;
+  }
+};
+
+struct Node {
+  Index index[M];
+  u32 child[M];
+  int size = 0;
+  bool is_leaf = false;
+  u32 next = 0;
+
+  Node() {}
+  ~Node() {}
+};
+
+constexpr u32 BSIZE = sizeof(Node);
 
 #endif
