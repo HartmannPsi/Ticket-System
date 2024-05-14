@@ -171,6 +171,16 @@ public:
   void traverse();
 
   int count(const Key &ind);
+
+  bool at(Key &ind);
+
+  bool modify(const Key &ind);
+
+  bool empty() {
+    Node node;
+    read_node(node, root);
+    return node.size == 0;
+  }
 };
 
 template <typename Key>
@@ -874,6 +884,69 @@ u32 BPlusTree<Key, M>::find(const Key &ind) {
   }
 
   return INT32_MAX;
+}
+
+template <typename Key, const int M> bool BPlusTree<Key, M>::at(Key &ind) {
+  Node node;
+  read_node(node, root);
+
+  if (node.is_leaf && node.size == 0) {
+    // std::cout << "null\n";
+    return false;
+  }
+
+  while (!node.is_leaf) {
+    if (ind > node.index[node.size - 1]) {
+      read_node(node, node.child[node.size]);
+
+    } else { // child[i]:  (index[i - 1], index[i]]
+      int pos = lower_bound(node.index, node.size, ind);
+      read_node(node, node.child[pos]);
+    }
+  }
+
+  for (int i = 0; i != node.size; ++i) {
+    if (node.index[i] == ind) {
+      ind = node.index[i];
+      return true;
+    }
+  }
+
+  return false;
+}
+
+template <typename Key, const int M>
+bool BPlusTree<Key, M>::modify(const Key &ind) {
+  Node node;
+  read_node(node, root);
+  u32 pos = root;
+
+  if (node.is_leaf && node.size == 0) {
+    // std::cout << "null\n";
+    return false;
+  }
+
+  while (!node.is_leaf) {
+    if (ind > node.index[node.size - 1]) {
+      read_node(node, node.child[node.size]);
+      pos = node.child[node.size];
+
+    } else { // child[i]:  (index[i - 1], index[i]]
+      int _pos = lower_bound(node.index, node.size, ind);
+      read_node(node, node.child[_pos]);
+      pos = node.child[_pos];
+    }
+  }
+
+  for (int i = 0; i != node.size; ++i) {
+    if (node.index[i] == ind) {
+      node.index[i] = ind;
+      write_node(node, pos);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 template <typename Key, const int M> void BPlusTree<Key, M>::traverse() {

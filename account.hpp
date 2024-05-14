@@ -3,13 +3,14 @@
 #define ACCOUNT_HPP
 
 #include "bpt.hpp"
+#include <iostream>
 
 struct Account { // M = 73
   char username[21] = {};
   char password[31] = {};
   char name[16] = {};
   char mail[31] = {};
-  int privilege = 1;
+  int privilege = 0;
 
   Account(const std::string &usr, const std::string &psw, const std::string &n,
           const std::string &m, int k)
@@ -19,6 +20,8 @@ struct Account { // M = 73
     strcpy(name, n.c_str());
     strcpy(mail, m.c_str());
   }
+
+  Account(const std::string &usr) { strcpy(username, usr.c_str()); }
 
   Account() {}
 
@@ -68,12 +71,10 @@ struct Account { // M = 73
   }
 };
 
-constexpr int M = 203; // M should be odd (101)
-constexpr u32 BLOCK = 4096 * 2;
-constexpr int CACHE_SIZE = 2048;
+constexpr int M = 73; // M should be odd (101)
 
 struct Node {
-  Index index[M];
+  Account index[M];
   u32 child[M];
   int size = 0;
   bool is_leaf = false;
@@ -87,5 +88,34 @@ constexpr u32 BSIZE = sizeof(Node);
 
 // BPlusTree<Account, 73> accounts("accounts.dat", "accounts.rec",
 //                                 "accounts.root");
+
+class AcSys {
+  BPlusTree<Account, 73> data;
+  map<std::string, int> log_table; // string: username, int: privilege
+
+public:
+  AcSys();
+
+  ~AcSys();
+
+  bool adduser(const std::string &usr, const std::string &psw,
+               const std::string &name, const std::string &mail,
+               const std::string &cur_usr, int priv);
+
+  bool login(const std::string &usr, const std::string &psw);
+
+  bool logout(const std::string &usr);
+
+  std::string
+  query(const std::string &cur_usr,
+        const std::string &usr); // "" if failed, a string if succeeded
+
+  std::string modify(const std::string &usr, const std::string &psw,
+                     const std::string &name, const std::string &mail,
+                     const std::string &cur_usr,
+                     int priv); // string: "" for default, int: -1 for default
+
+  int usrpriv(const std::string &usr) const; // 0-10 if logged in, -1 if not
+};
 
 #endif
