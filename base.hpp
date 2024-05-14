@@ -7,8 +7,8 @@
 #include <fstream>
 #include <string>
 
-template <typename Val> class Base {
-  BPlusTree<Index> index;
+template <typename Val, const int M = 203> class Base {
+  BPlusTree<Index, M> index;
   std::fstream data;
   u32 end;
 

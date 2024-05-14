@@ -11,11 +11,7 @@
 
 using u32 = unsigned long;
 
-constexpr int M = 203; // M should be odd (101)
-constexpr u32 BLOCK = 4096 * 2;
-constexpr int CACHE_SIZE = 2048;
-
-template <typename Key> class BPlusTree {
+template <typename Key, const int M> class BPlusTree {
 
   class LRUCache;
   friend class BPlusTree::LRUCache;
@@ -53,6 +49,9 @@ template <typename Key> class BPlusTree {
   const std::string ind;
   List<u32> ind_pool;
   u32 root;
+  // const int M; // M should be odd (101)
+  const u32 BLOCK;
+  const int CACHE_SIZE;
 
   // read sth from the files
   void read_node(Node &dest, u32 pos);
@@ -90,10 +89,10 @@ template <typename Key> class BPlusTree {
   struct LRUCache {
     List<pair<Node, u32>> list;
     map<u32, typename List<pair<Node, u32>>::_Node *> table;
-    BPlusTree<Key> *pt;
+    BPlusTree<Key, M> *pt;
 
   public:
-    LRUCache(BPlusTree<Key> *_pt) : pt(_pt) {}
+    LRUCache(BPlusTree<Key, M> *_pt) : pt(_pt) {}
 
     ~LRUCache() { clear(); }
 
@@ -115,7 +114,7 @@ template <typename Key> class BPlusTree {
       auto tmp = list.push_front({new_node, pos});
       table.insert({pos, tmp});
 
-      if (list.size() > CACHE_SIZE) {
+      if (list.size() > pt->CACHE_SIZE) {
         pop();
       }
 
@@ -158,7 +157,8 @@ template <typename Key> class BPlusTree {
 public:
   BPlusTree(const std::string &index_file = "index.dat",
             const std::string &index_recycle = "index.rec",
-            const std::string &r = ".root");
+            const std::string &r = ".root", u32 _BLOCK = 4096 * 2,
+            int _CACHE = 2048);
 
   ~BPlusTree();
 
@@ -179,13 +179,13 @@ int lower_bound(const Key *const beg, int size, const Key &index);
 template <typename Key>
 int upper_bound(const Key *const beg, int size, const Key &index);
 
-template <typename Key>
-BPlusTree<Key>::BPlusTree(const std::string &index_file,
+template <typename Key, const int M>
+BPlusTree<Key, M>::BPlusTree(const std::string &index_file,
 
-                          const std::string &index_recycle,
+                             const std::string &index_recycle,
 
-                          const std::string &r)
-    : cache(this), ind(index_file) {
+                             const std::string &r, u32 _BLOCK, int _CACHE)
+    : cache(this), ind(index_file), BLOCK(_BLOCK), CACHE_SIZE(_CACHE) {
 
   ind_file.open(index_file, std::ios::in | std::ios::out);
   if (!ind_file.is_open()) { // 1st time to open
@@ -230,7 +230,7 @@ BPlusTree<Key>::BPlusTree(const std::string &index_file,
   cache.add(root);
 }
 
-template <typename Key> BPlusTree<Key>::~BPlusTree() {
+template <typename Key, const int M> BPlusTree<Key, M>::~BPlusTree() {
 
   // restore cache to file
   cache.clear();
@@ -253,17 +253,18 @@ template <typename Key> BPlusTree<Key>::~BPlusTree() {
   _root.close();
 }
 
-template <typename Key> void BPlusTree<Key>::read_node(Node &dest, u32 pos) {
+template <typename Key, const int M>
+void BPlusTree<Key, M>::read_node(Node &dest, u32 pos) {
   auto read = cache.find(pos);
   dest = *read;
 }
 
-template <typename Key>
-void BPlusTree<Key>::write_node(const Node &src, u32 pos) {
+template <typename Key, const int M>
+void BPlusTree<Key, M>::write_node(const Node &src, u32 pos) {
   cache.modify(pos, src);
 }
 
-template <typename Key> u32 BPlusTree<Key>::free_node() {
+template <typename Key, const int M> u32 BPlusTree<Key, M>::free_node() {
   u32 res = ind_pool.top();
   ind_pool.pop_front();
   if (ind_pool.empty()) {
@@ -273,12 +274,13 @@ template <typename Key> u32 BPlusTree<Key>::free_node() {
   return res;
 }
 
-template <typename Key> void BPlusTree<Key>::rec_node(u32 pos) {
+template <typename Key, const int M> void BPlusTree<Key, M>::rec_node(u32 pos) {
   cache.erase(pos);
   ind_pool.push_front(pos);
 }
 
-template <typename Key> bool BPlusTree<Key>::insert(const Key &ind) {
+template <typename Key, const int M>
+bool BPlusTree<Key, M>::insert(const Key &ind) {
   Node node[8];
   u32 pos[8];
   int child[8];
@@ -359,9 +361,10 @@ template <typename Key> bool BPlusTree<Key>::insert(const Key &ind) {
   return true;
 }
 
-template <typename Key>
-void BPlusTree<Key>::insert_internal(Node node[], int i, int child[], u32 pos[],
-                                     u32 new_pos, const Key &new_ind) {
+template <typename Key, const int M>
+void BPlusTree<Key, M>::insert_internal(Node node[], int i, int child[],
+                                        u32 pos[], u32 new_pos,
+                                        const Key &new_ind) {
   if (i == -1) { // split root
     Node new_root;
     u32 new_root_pos = free_node();
@@ -422,7 +425,8 @@ void BPlusTree<Key>::insert_internal(Node node[], int i, int child[], u32 pos[],
   insert_internal(node, i - 1, child, pos, new_node_pos, node[i].index[M / 2]);
 }
 
-template <typename Key> int BPlusTree<Key>::count(const Key &ind) {
+template <typename Key, const int M>
+int BPlusTree<Key, M>::count(const Key &ind) {
   Node node[8];
   u32 pos[8];
   int child[8];
@@ -462,7 +466,8 @@ template <typename Key> int BPlusTree<Key>::count(const Key &ind) {
   return 1;
 }
 
-template <typename Key> bool BPlusTree<Key>::erase(const Key &ind) {
+template <typename Key, const int M>
+bool BPlusTree<Key, M>::erase(const Key &ind) {
   Node node[8];
   u32 pos[8];
   int child[8];
@@ -647,9 +652,9 @@ template <typename Key> bool BPlusTree<Key>::erase(const Key &ind) {
   return true;
 }
 
-template <typename Key>
-void BPlusTree<Key>::merge_internal(Node node[], int i, int child[],
-                                    u32 pos[]) {
+template <typename Key, const int M>
+void BPlusTree<Key, M>::merge_internal(Node node[], int i, int child[],
+                                       u32 pos[]) {
 
   if (i == 0) {
     if (node[0].size > 0) {
@@ -827,7 +832,8 @@ void BPlusTree<Key>::merge_internal(Node node[], int i, int child[],
   }
 }
 
-template <typename Key> u32 BPlusTree<Key>::find(const Key &ind) {
+template <typename Key, const int M>
+u32 BPlusTree<Key, M>::find(const Key &ind) {
   Node node;
   read_node(node, root);
 
@@ -870,7 +876,7 @@ template <typename Key> u32 BPlusTree<Key>::find(const Key &ind) {
   return INT32_MAX;
 }
 
-template <typename Key> void BPlusTree<Key>::traverse() {
+template <typename Key, const int M> void BPlusTree<Key, M>::traverse() {
   Node node;
   u32 pos = root;
   int height = 1;
@@ -1010,18 +1016,5 @@ struct Index {
     return os;
   }
 };
-
-struct Node {
-  Index index[M];
-  u32 child[M];
-  int size = 0;
-  bool is_leaf = false;
-  u32 next = 0;
-
-  Node() {}
-  ~Node() {}
-};
-
-constexpr u32 BSIZE = sizeof(Node);
 
 #endif
