@@ -12,5 +12,6 @@
 #include "time.hpp"
 #include "train.hpp"
 #include "utility.hpp"
+#include "vector.hpp"
 
 #endif
