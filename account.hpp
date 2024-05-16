@@ -116,6 +116,8 @@ public:
                      int priv); // string: "" for default, int: -1 for default
 
   int usrpriv(const std::string &usr) const; // 0-10 if logged in, -1 if not
+
+  void clear();
 };
 
 #endif

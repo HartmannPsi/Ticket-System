@@ -1,37 +1,31 @@
-#include "bpt.hpp"
-#include <cstring>
+#include "headers.hpp"
 #include <iostream>
 #include <string>
 
-int n;
+#define DEBUG
+
+AcSys accounts;
+TrSys trains;
 
 int main() {
+#ifdef DEBUG
   std::ios::sync_with_stdio(false);
   std::cin.tie(nullptr);
   std::cout.tie(nullptr);
-  std::cin >> n;
-  BPlusTree<Index> bpt;
+#endif
 
-  for (int i = 0; i != n; ++i) {
-    std::string command;
-    Index index;
-    std::cin >> command;
+  while (true) {
+    std::string input;
+    std::getline(std::cin, input);
 
-    if (command == "insert") {
-      std::cin >> index;
-      bpt.insert(index);
-    } else if (command == "delete") {
-      std::cin >> index;
-      bpt.erase(index);
-
-    } else if (command == "find") {
-      std::string tmp;
-      std::cin >> tmp;
-      strcpy(index.str, tmp.c_str());
-      index.pos = INT32_MIN;
-      bpt.find(index);
-    } else if (command == "traverse") {
-      bpt.traverse();
+    try {
+      process(input);
+    } catch (const std::string &str) {
+      std::cout << "[Error] " << str;
+    } catch (const char *const str) {
+      std::cout << "[Error] " << str;
+    } catch (...) {
+      std::cout << "[Error] Unkown Exception.\n";
     }
   }
 

@@ -119,3 +119,8 @@ int AcSys::usrpriv(
     return it->second;
   }
 }
+
+void AcSys::clear() {
+  data.clear();
+  log_table.clear();
+}

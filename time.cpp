@@ -1,6 +1,6 @@
 #include "time.hpp"
 
-Time::Time(long long stamp) { // stamp = 0, Time = 2024/06/01/00:00
+Time::Time(int stamp) { // stamp = 0, Time = 2024/06/01/00:00
 
   auto foo = [&]() {
     day = stamp / DAY + 1;
@@ -46,13 +46,13 @@ Time::Time(long long stamp) { // stamp = 0, Time = 2024/06/01/00:00
 }
 
 Time &Time::operator+=(const Time &other) {
-  long long stamp = (long long)(*this) + (long long)(other);
+  int stamp = (int)(*this) + (int)(other);
   *this = Time(stamp);
   return *this;
 }
 
-Time &Time::operator+=(long long other) {
-  long long stamp = (long long)(*this) + other;
+Time &Time::operator+=(int other) {
+  int stamp = (int)(*this) + other;
   *this = Time(stamp);
   return *this;
 }
@@ -63,37 +63,37 @@ Time Time::operator+(const Time &other) const {
   return tmp;
 }
 
-Time Time::operator+(long long other) const {
+Time Time::operator+(int other) const {
   Time tmp(*this);
   tmp += other;
   return tmp;
 }
 
 bool Time::operator<(const Time &other) const {
-  return (long long)(*this) < (long long)(other);
+  return (int)(*this) < (int)(other);
 }
 
 bool Time::operator<=(const Time &other) const {
-  return (long long)(*this) <= (long long)(other);
+  return (int)(*this) <= (int)(other);
 }
 
 bool Time::operator>(const Time &other) const {
-  return (long long)(*this) > (long long)(other);
+  return (int)(*this) > (int)(other);
 }
 
 bool Time::operator>=(const Time &other) const {
-  return (long long)(*this) >= (long long)(other);
+  return (int)(*this) >= (int)(other);
 }
 
 bool Time::operator==(const Time &other) const {
-  return (long long)(*this) == (long long)(other);
+  return (int)(*this) == (int)(other);
 }
 
-Time::operator long long() const {
-  long long res = 0;
-  res += min;
-  res += hour * HOUR;
-  res += (day - 1) * DAY;
+Time::operator int() const {
+  int res = 0;
+  res += int(min);
+  res += int(hour) * HOUR;
+  res += int(day - 1) * DAY;
   switch (mon) {
   case 12:
     res += 30 * DAY;
@@ -115,4 +115,4 @@ Time::operator long long() const {
   return res;
 }
 
-long long Time::stamp() const { return (long long)(*this); }
+int Time::stamp() const { return (int)(*this); }

@@ -4,7 +4,8 @@
 
 #include <cstdint>
 
-constexpr long long HOUR = 60, DAY = 24 * HOUR;
+constexpr int HOUR = 60, DAY = 24 * HOUR,
+              MAX_TIME = DAY * (30 + 31 + 31 + 30 + 31 + 30 + 31);
 
 class Time {
 public:
@@ -18,7 +19,7 @@ public:
 
   Time(int _hour, int _min) : mon(0), day(0), hour(_hour), min(_min) {}
 
-  Time(long long stamp); // stamp = 0, Time = 2024/06/01/00:00
+  Time(int stamp); // stamp = 0, Time = 2024/06/01/00:00
 
   ~Time() = default;
 
@@ -31,10 +32,10 @@ public:
   Time &operator=(Time &&other) = default;
 
   Time &operator+=(const Time &other);
-  Time &operator+=(long long other);
+  Time &operator+=(int other);
 
   Time operator+(const Time &other) const;
-  Time operator+(long long other) const;
+  Time operator+(int other) const;
 
   bool operator<(const Time &other) const;
   bool operator<=(const Time &other) const;
@@ -42,8 +43,8 @@ public:
   bool operator>=(const Time &other) const;
   bool operator==(const Time &other) const;
 
-  operator long long() const;
-  long long stamp() const;
+  operator int() const;
+  int stamp() const;
 };
 
 #endif
