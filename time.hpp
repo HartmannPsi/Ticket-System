@@ -3,6 +3,7 @@
 #define TIME_HPP
 
 #include <cstdint>
+#include <string>
 
 constexpr int HOUR = 60, DAY = 24 * HOUR,
               MAX_TIME = DAY * (30 + 31 + 31 + 30 + 31 + 30 + 31);
@@ -45,6 +46,8 @@ public:
 
   operator int() const;
   int stamp() const;
+
+  std::string display() const;
 };
 
 #endif

@@ -192,6 +192,10 @@ template <typename Key>
 int upper_bound(const Key *const beg, int size, const Key &index);
 
 template <typename Key, const int M> void BPlusTree<Key, M>::clear() {
+  ind_file.close();
+  ind_rec.close();
+  _root.close();
+
   ind_file.open(ind, std::ios::out);
   ind_file.close();
   ind_file.open(ind, std::ios::in | std::ios::out);

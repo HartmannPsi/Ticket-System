@@ -3,13 +3,10 @@
 #define INPUT_PROCESS_HPP
 
 #include "account.hpp"
-#include "strcheck.hpp"
+// #include "strcheck.hpp"
 #include "time.hpp"
 #include "train.hpp"
 #include <iostream>
-
-extern AcSys accounts;
-extern TrSys trains;
 
 std::string slice(const std::string &str = "");
 

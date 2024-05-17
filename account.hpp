@@ -71,21 +71,6 @@ struct Account { // M = 73
   }
 };
 
-constexpr int M = 73; // M should be odd (101)
-
-struct Node {
-  Account index[M];
-  u32 child[M];
-  int size = 0;
-  bool is_leaf = false;
-  u32 next = 0;
-
-  Node() {}
-  ~Node() {}
-};
-
-constexpr u32 BSIZE = sizeof(Node);
-
 // BPlusTree<Account, 73> accounts("accounts.dat", "accounts.rec",
 //                                 "accounts.root");
 

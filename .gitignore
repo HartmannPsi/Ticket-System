@@ -3,3 +3,5 @@ build/
 testcases_ts/
 clear
 utf_test.cpp
+strcheck.hpp
+strcheck.cpp

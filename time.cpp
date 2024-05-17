@@ -1,4 +1,5 @@
 #include "time.hpp"
+#include <string>
 
 Time::Time(int stamp) { // stamp = 0, Time = 2024/06/01/00:00
 
@@ -116,3 +117,28 @@ Time::operator int() const {
 }
 
 int Time::stamp() const { return (int)(*this); }
+
+std::string Time::display() const {
+  std::string res = "";
+  if (mon < 10) {
+    res += '0';
+  }
+  res += std::to_string(mon);
+  res += '-';
+  if (day < 10) {
+    res += '0';
+  }
+  res += std::to_string(day);
+  res += ' ';
+  if (hour < 10) {
+    res += '0';
+  }
+  res += std::to_string(hour);
+  res += ':';
+  if (min < 10) {
+    res += '0';
+  }
+  res += std::to_string(min);
+
+  return res;
+}

@@ -1,6 +1,6 @@
 #include "account.hpp"
 
-AcSys::AcSys() : data("accounts.dat", "accounts.rec", "accounts.root") {}
+AcSys::AcSys() : data("account.dat", "account.rec", "account.r") {}
 
 AcSys::~AcSys() = default;
 

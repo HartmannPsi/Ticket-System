@@ -1,5 +1,8 @@
 #include "input_process.hpp"
 
+extern AcSys accounts;
+extern TrSys trains;
+
 std::string slice(const std::string &_str) {
   static int pos = 0;
   static std::string str = "";
@@ -253,7 +256,7 @@ void process(const std::string &input) {
                 sale_d = "";
     int stat_num = -1, seat_num = -1;
     char type = 'A';
-    Time start_t(0, 0), start_sale(0, 0), end_sale(23, 59);
+    Time start_t(0, 0), start_sale(0, 0), end_sale(0, 0);
 
     auto get_info = [&]() {
       const std::string tp = slice();
