@@ -1,11 +1,15 @@
 #include "train.hpp"
+#include "account.hpp"
 #include <string>
 // for test
 #include <algorithm>
 
+extern AcSys accounts;
+
 TrSys::TrSys()
     : train_data("train.dat", "train.rec", "train.r", 4096 * 26, 512),
-      stat_data("station.dat", "station.rec", "station.r") {
+      stat_data("station.dat", "station.rec", "station.r"),
+      every_train("every_train.dat", "every_train.rec", "every_train.r") {
   stat_file.open("station_serials.dat");
 
   if (!stat_file.is_open()) {
@@ -352,6 +356,69 @@ int TrSys::buy_ticket(
     const std::string &usr, const std::string &id, int day,
     const std::string &from, const std::string &to, int n,
     bool is_q) { // -1 for failed, 0 for queue, positive for secceeded
+
+  if (accounts.usrpriv(usr) == -1) {
+    return -1;
+  }
+
+  Train train;
+  strcpy(train.id, id.c_str());
+
+  if (train_data.at(train) && train.released) {
+    const auto _from = serials[from], _to = serials[to];
+    EveryTr tr;
+    strcpy(tr.id, id.c_str());
+
+    Time time(day + train.start_t);
+    int start_day = day;
+    int j = 0;
+    for (; j != train.stat_num - 1; ++j) {
+      if (train.stations[j] == _from) {
+        break;
+      }
+      time += train.travel_t[j];
+      time += train.stop_t[j];
+    }
+
+    while (time.stamp() > day + DAY - 1) {
+      start_day -= DAY;
+      time -= DAY;
+    }
+
+    tr.day = start_day;
+    if (!every_train.at(tr)) {
+      return -1;
+    }
+
+    int price = 0;
+    for (; j != train.stat_num; ++j) {
+      if (train.stations[j] == _to) {
+        break;
+      }
+      if (j == train.stat_num - 1) {
+        break;
+      }
+      time += train.travel_t[j];
+      time += train.stop_t[j];
+      if (tr.seat_nums[j] < n) {
+        if (is_q) {
+          // add to queue
+          // add to user order
+          return 0;
+        }
+      }
+      price += train.prices[j] * n;
+      tr.seat_nums[j] -= n;
+    }
+
+    every_train.modify(tr);
+
+    // add to user order
+    return price;
+
+  } else {
+    return -1;
+  }
 }
 
 std::string TrSys::query_order(const std::string &usr) {}
@@ -361,6 +428,7 @@ bool TrSys::refund_ticket(const std::string &usr, int n) {}
 void TrSys::clear() {
   train_data.clear();
   stat_data.clear();
+  every_train.clear();
   serials.clear();
   stats.clear();
   max_serial = 0;
