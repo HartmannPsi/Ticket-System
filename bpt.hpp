@@ -4,6 +4,7 @@
 
 #include "double_list.hpp"
 #include "map.hpp"
+#include "vector.hpp"
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -180,6 +181,10 @@ public:
     Node node;
     read_node(node, root);
     return node.size == 0;
+  }
+
+  vector<std::string> find_trains(const Key &ind) {
+    throw "This member is not designed to be used in the instantiation.\n";
   }
 
   void clear();

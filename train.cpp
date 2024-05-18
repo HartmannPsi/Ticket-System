@@ -1,8 +1,10 @@
 #include "train.hpp"
 #include <string>
+// for test
+#include <algorithm>
 
 TrSys::TrSys()
-    : train_data("train.dat", "train.rec", "train.r", 4096 * 20, 512),
+    : train_data("train.dat", "train.rec", "train.r", 4096 * 26, 512),
       stat_data("station.dat", "station.rec", "station.r") {
   stat_file.open("station_serials.dat");
 
@@ -59,6 +61,7 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
   new_t.start_sale = start_sale;
   new_t.end_sale = end_sale;
   new_t.type = type;
+  new_t.seat_num = seat_num;
   strcpy(new_t.id, id.c_str());
   for (int i = 0; i != stat_num; ++i) {
     stats.insert({max_serial, stations[i]});
@@ -71,7 +74,6 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
   for (int i = 0; i != stat_num - 1; ++i) {
     new_t.prices[i] = prices[i];
     new_t.travel_t[i] = travel_t[i];
-    new_t.seat_nums[i] = seat_num;
   }
 
   if (stat_num != 2) {
@@ -91,7 +93,7 @@ bool TrSys::delete_train(const std::string &id) {
   Train tmp;
   strcpy(tmp.id, id.c_str());
 
-  if (train_data.find(tmp)) {
+  if (train_data.at(tmp)) {
     if (tmp.released) {
       return false;
     } else {
@@ -107,7 +109,7 @@ bool TrSys::release_train(const std::string &id) {
   Train tmp;
   strcpy(tmp.id, id.c_str());
 
-  if (train_data.find(tmp)) {
+  if (train_data.at(tmp)) {
     if (tmp.released) {
       return false;
     } else {
@@ -119,6 +121,17 @@ bool TrSys::release_train(const std::string &id) {
         strcpy(stat.train_id, tmp.id);
         stat_data.insert(stat);
       }
+
+      for (int day = tmp.start_sale; day <= tmp.end_sale; day += DAY) {
+        EveryTr train;
+        strcpy(train.id, tmp.id);
+        train.day = day;
+        for (int i = 0; i != tmp.stat_num - 1; ++i) {
+          train.seat_nums[i] = tmp.seat_num;
+        }
+        every_train.insert(train);
+      }
+
       return true;
     }
   } else {
@@ -126,12 +139,19 @@ bool TrSys::release_train(const std::string &id) {
   }
 }
 
-std::string TrSys::query_train(const std::string &id, int day) {
+std::string TrSys::query_train(const std::string &id,
+                               int day) { // to be modified
   Train train;
   strcpy(train.id, id.c_str());
-  if (train_data.find(train)) {
+  if (train_data.at(train)) {
 
     if (train.start_sale <= day && day <= train.end_sale) {
+      EveryTr tr;
+      if (train.released) {
+        strcpy(tr.id, train.id);
+        tr.day = day;
+        every_train.at(tr);
+      }
       std::string res = "";
       res += std::string(train.id) + ' ' + train.type + '\n';
 
@@ -143,7 +163,11 @@ std::string TrSys::query_train(const std::string &id, int day) {
       res += "xx-xx xx:xx -> ";
       res += time.display() + ' ';
       res += std::to_string(total_price) + ' ';
-      res += std::to_string(train.seat_nums[0]) + '\n';
+      if (!train.released) {
+        res += std::to_string(train.seat_num) + '\n';
+      } else {
+        res += std::to_string(tr.seat_nums[0]) + '\n';
+      }
       time += train.travel_t[0];
       total_price += train.prices[0];
 
@@ -154,7 +178,11 @@ std::string TrSys::query_train(const std::string &id, int day) {
         time += train.stop_t[i - 1];
         res += time.display() + ' ';
         res += std::to_string(total_price) + ' ';
-        res += std::to_string(train.seat_nums[i]) + '\n';
+        if (!train.released) {
+          res += std::to_string(train.seat_num) + '\n';
+        } else {
+          res += std::to_string(tr.seat_nums[i]) + '\n';
+        }
         time += train.travel_t[i];
         total_price += train.prices[i];
       }
@@ -176,9 +204,143 @@ std::string TrSys::query_train(const std::string &id, int day) {
   }
 }
 
+template <>
+vector<std::string> BPlusTree<Station, 227>::find_trains(const Station &ind) {
+  Node node;
+  read_node(node, root);
+  vector<std::string> _res;
+
+  if (node.is_leaf && node.size == 0) {
+    // std::cout << "null\n";
+    return _res;
+  }
+
+  while (!node.is_leaf) {
+    if (ind > node.index[node.size - 1]) {
+      read_node(node, node.child[node.size]);
+
+    } else { // child[i]:  (index[i - 1], index[i]]
+      int pos = lower_bound(node.index, node.size, ind);
+      read_node(node, node.child[pos]);
+    }
+  }
+
+  while (true) {
+    // int res = 0;
+    int i = 0;
+    for (; i != node.size; ++i) {
+      if (ind.name == node.index[i].name) {
+        _res.push_back(std::string(node.index[i].train_id));
+      } else if (ind.name < node.index[i].name) {
+        break;
+      }
+    }
+    if (ind.name < node.index[i].name) {
+      break;
+    }
+
+    if (node.next == INT32_MAX) {
+      break;
+    }
+    read_node(node, node.next);
+  }
+
+  return _res;
+}
+
 std::string TrSys::query_ticket(const std::string &from, const std::string &to,
                                 int day,
                                 bool tp) { // tp: true for time, false for cost
+  const auto _from = serials[from], _to = serials[to];
+  Station tmp;
+  tmp.name = _from;
+  auto train_ids = stat_data.find_trains(tmp);
+  vector<Info> infos;
+
+  for (int i = 0; i != train_ids.size(); ++i) {
+    // auto &id = res[i];
+    Train train;
+    Info tmp;
+    strcpy(train.id, train_ids[i].c_str());
+    train_data.at(train);
+    EveryTr tr;
+    strcpy(tr.id, train_ids[i].c_str());
+
+    // if (!(train.released && train.start_sale <= day && day <=
+    // train.end_sale)) {
+    //   continue;
+    // }
+    if (_from == train.stations[train.stat_num - 1]) {
+      continue;
+    }
+    tmp.id = train_ids[i];
+    Time time(day + train.start_t);
+    int start_day = day;
+    int j = 0;
+    for (; j != train.stat_num - 1; ++j) {
+      if (train.stations[j] == _from) {
+        break;
+      }
+      time += train.travel_t[j];
+      time += train.stop_t[j];
+    }
+
+    while (time.stamp() > day + DAY - 1) {
+      start_day -= DAY;
+      time -= DAY;
+    }
+
+    tmp.leave = time;
+    tr.day = start_day;
+    if (!every_train.at(tr)) {
+      continue;
+    }
+
+    int seat = tr.seat_nums[j];
+    int price = 0;
+    for (; j != train.stat_num; ++j) {
+      if (train.stations[j] == _to) {
+        break;
+      }
+      if (j == train.stat_num - 1) {
+        break;
+      }
+      time += train.travel_t[j];
+      time += train.stop_t[j];
+      seat = std::min(seat, tr.seat_nums[j]);
+      price += train.prices[j];
+    }
+    if (train.stations[j] != _to) {
+      continue;
+    }
+    tmp.arrive = time;
+    tmp.seat = seat;
+    tmp.price = price;
+    infos.push_back(tmp);
+
+    // get infos
+  }
+  // sort by key
+  if (tp) {
+    std::sort(infos.begin(), infos.end(), Info::CmpByTime());
+  } else {
+    std::sort(infos.begin(), infos.end(), Info::CmpByCost());
+  }
+
+  std::string res = "";
+  res += std::to_string(infos.size()) + '\n';
+  for (int i = 0; i != infos.size(); ++i) {
+    res += infos[i].id + ' ';
+    res += from + ' ';
+    res += infos[i].leave.display() + " -> ";
+    res += to + ' ';
+    res += infos[i].arrive.display() + ' ';
+    res += std::to_string(infos[i].price) + ' ';
+    res += std::to_string(infos[i].seat) + '\n';
+  }
+
+  return res;
+  // return res
 }
 
 std::string

@@ -34,6 +34,7 @@ public:
 
   Time &operator+=(const Time &other);
   Time &operator+=(int other);
+  Time &operator-=(int other);
 
   Time operator+(const Time &other) const;
   Time operator+(int other) const;

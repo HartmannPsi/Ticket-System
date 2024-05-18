@@ -58,6 +58,12 @@ Time &Time::operator+=(int other) {
   return *this;
 }
 
+Time &Time::operator-=(int other) {
+  int stamp = (int)(*this) - other;
+  *this = Time(stamp);
+  return *this;
+}
+
 Time Time::operator+(const Time &other) const {
   Time tmp(*this);
   tmp += other;
