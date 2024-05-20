@@ -169,7 +169,7 @@ public:
 
   u32 find(const Key &ind);
 
-  void traverse();
+  bool traverse(Key &ind, bool from_begin = false);
 
   int count(const Key &ind);
 
@@ -184,6 +184,10 @@ public:
   }
 
   vector<std::string> find_trains(const Key &ind) {
+    throw "This member is not designed to be used in the instantiation.\n";
+  }
+
+  vector<Key> query_order(const Key &ind) {
     throw "This member is not designed to be used in the instantiation.\n";
   }
 
@@ -979,39 +983,41 @@ bool BPlusTree<Key, M>::modify(const Key &ind) {
   return false;
 }
 
-template <typename Key, const int M> void BPlusTree<Key, M>::traverse() {
-  Node node;
-  u32 pos = root;
-  int height = 1;
-  ind_file.seekg(root);
-  ind_file.read(reinterpret_cast<char *>(&node), sizeof(Node));
+template <typename Key, const int M>
+bool BPlusTree<Key, M>::traverse(Key &ind, bool from_begin) {
+  // static u32 pos = 0;
+  static int num = 0;
+  static Node node;
 
-  while (!node.is_leaf) {
-    if (node.size == 0) {
-      std::cout << "SIZE ZERO!!!\n";
-      return;
+  if (from_begin) {
+    // pos = 0;
+    num = 0;
+    read_node(node, 0);
+    // pos = node.next;
+
+    if (num == node.size) {
+      return false;
     }
-    pos = node.child[0];
-    ind_file.seekg(pos);
-    ind_file.read(reinterpret_cast<char *>(&node), sizeof(Node));
-    ++height;
-  }
 
-  std::cout << "HEIGHT: " << height << '\n';
+    ind = node.index[num];
+    ++num;
+    return true;
 
-  while (true) {
-    std::cout << "ADDR: " << pos << " SIZE: " << node.size << '\n';
-    for (int i = 0; i != node.size; ++i) {
-      std::cout << node.index[i] << '\t';
+  } else {
+
+    if (num == node.size) {
+      if (node.next == INT32_MAX) {
+        return false;
+      }
+
+      num = 0;
+      read_node(node, node.next);
+      // pos = node.next;
     }
-    std::cout << "\nEND OF BLOCK\n";
-    if (node.next == INT32_MAX) {
-      break;
-    }
-    pos = node.next;
 
-    ind_file.seekg(pos);
-    ind_file.read(reinterpret_cast<char *>(&node), sizeof(Node));
+    ind = node.index[num];
+    ++num;
+    return true;
   }
 }
 

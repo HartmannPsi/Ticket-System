@@ -230,6 +230,101 @@ struct Stat_serial {
   int serial = 0;
 };
 
+struct Queue;
+
+struct History {
+  char usr[21] = {};
+  char tr_id[21] = {};
+  int time = 0, num = 0, from = 0, to = 0, start_day = 0, price = 0, leave = 0,
+      arrive = 0;
+  int8_t status = 0; // 0 for pending, 1 for success, -1 for refunded
+
+  History(const Queue &other);
+
+  History() {}
+
+  bool operator==(const History &other) const {
+    const int res = strcmp(usr, other.usr);
+
+    return res == 0 && time == other.time;
+  }
+
+  bool operator!=(const History &other) const {
+    const int res = strcmp(usr, other.usr);
+
+    return res != 0 || time != other.time;
+  }
+
+  bool operator<=(const History &other) const {
+    const int res = strcmp(usr, other.usr);
+    if (res != 0) {
+      return res < 0;
+    } else {
+      return time >= other.time;
+    }
+  }
+
+  bool operator>=(const History &other) const {
+    const int res = strcmp(usr, other.usr);
+    if (res != 0) {
+      return res > 0;
+    } else {
+      return time <= other.time;
+    }
+  }
+
+  bool operator<(const History &other) const {
+    const int res = strcmp(usr, other.usr);
+    if (res != 0) {
+      return res < 0;
+    } else {
+      return time > other.time;
+    }
+  }
+
+  bool operator>(const History &other) const {
+    const int res = strcmp(usr, other.usr);
+    if (res != 0) {
+      return res > 0;
+    } else {
+      return time < other.time;
+    }
+  }
+};
+
+struct Queue {
+  char usr[21] = {};
+  char tr_id[21] = {};
+  int time = 0, num = 0, from = 0, to = 0,
+      start_day = 0; // price = 0, leave = 0,
+                     // arrive = 0;
+  // int8_t status = 0; // 0 for pending, 1 for success, -1 for refunded
+
+  Queue(const History &other) {
+    strcpy(usr, other.usr);
+    strcpy(tr_id, other.tr_id);
+    time = other.time;
+    num = other.num;
+    from = other.from;
+    to = other.to;
+    start_day = other.start_day;
+  }
+
+  Queue() {}
+
+  bool operator==(const History &other) const { return time == other.time; }
+  bool operator!=(const History &other) const { return time != other.time; }
+  bool operator>(const History &other) const { return time < other.time; }
+  bool operator<(const History &other) const { return time > other.time; }
+  bool operator>=(const History &other) const { return time <= other.time; }
+  bool operator<=(const History &other) const { return time >= other.time; }
+};
+
+History::History(const Queue &other) {
+  strcpy(usr, other.usr);
+  time = other.time;
+}
+
 constexpr int M = 65; // M should be odd (101)
 
 struct Node {
@@ -249,6 +344,8 @@ class TrSys {
   BPlusTree<Train, 65> train_data;
   BPlusTree<Station, 227> stat_data; // TODO: adjust the numbers
   BPlusTree<EveryTr, 111> every_train;
+  BPlusTree<History, 123> history;
+  BPlusTree<Queue, 123> queue;
 
   map<std::string, int> serials;
   map<int, std::string> stats;
@@ -282,8 +379,10 @@ public:
 
   int buy_ticket(
       const std::string &usr, const std::string &id, int day,
-      const std::string &from, const std::string &to, int n,
-      bool is_q); // -1 for failed, 0 for queue, positive for secceeded
+      const std::string &from, const std::string &to, int n, bool is_q,
+      int time_stamp); // -1 for failed, 0 for queue, positive for secceeded
+
+  bool queue_ticket(const Queue &q);
 
   std::string query_order(const std::string &usr);
 

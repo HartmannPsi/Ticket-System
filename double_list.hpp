@@ -30,6 +30,18 @@ public:
     return new_node;
   }
 
+  _Node *push_back(const T &val) {
+    _Node *new_node = new _Node(val);
+    new_node->prev = end->prev;
+    if (new_node->prev != nullptr) {
+      new_node->prev->next = new_node;
+    }
+    end->prev = new_node;
+    new_node->next = end;
+    ++s;
+    return new_node;
+  }
+
   void pop_front() {
 
     if (s == 0) {

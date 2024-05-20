@@ -247,7 +247,7 @@ void process(const std::string &input) {
     if (res == "") {
       throw "-1: Failed to modify profile.\n";
     } else {
-      std::cout << res << '\n';
+      std::cout << res << '\n'; // Hartmann_Psi
     }
 
   } else if (cmd == "add_train") {
@@ -508,7 +508,10 @@ void process(const std::string &input) {
     while (get_info())
       ;
 
-    const auto res = trains.buy_ticket(usr, id, int(day), from, to, n, is_q);
+    int time = std::stoi(time_stamp.substr(1, time_stamp.size() - 2));
+
+    const auto res =
+        trains.buy_ticket(usr, id, int(day), from, to, n, is_q, time);
 
     if (res > 0) {
       std::cout << res << '\n';

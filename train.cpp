@@ -1,5 +1,6 @@
 #include "train.hpp"
 #include "account.hpp"
+#include "time.hpp"
 #include <string>
 // for test
 #include <algorithm>
@@ -9,7 +10,10 @@ extern AcSys accounts;
 TrSys::TrSys()
     : train_data("train.dat", "train.rec", "train.r", 4096 * 26, 512),
       stat_data("station.dat", "station.rec", "station.r"),
-      every_train("every_train.dat", "every_train.rec", "every_train.r") {
+      every_train("every_train.dat", "every_train.rec", "every_train.r"),
+      history("history.dat", "history.rec", "history.r"),
+      queue("queue.dat", "queue.rec", "queue.r") {
+
   stat_file.open("station_serials.dat");
 
   if (!stat_file.is_open()) {
@@ -352,10 +356,11 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
                       bool tp) { // tp: true for time, false for cost
 }
 
-int TrSys::buy_ticket(
-    const std::string &usr, const std::string &id, int day,
-    const std::string &from, const std::string &to, int n,
-    bool is_q) { // -1 for failed, 0 for queue, positive for secceeded
+int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
+                      const std::string &from, const std::string &to, int n,
+                      bool is_q,
+                      int time_stamp) { // -1 for failed, 0 for queue,
+                                        // positive for secceeded
 
   if (accounts.usrpriv(usr) == -1) {
     return -1;
@@ -390,7 +395,17 @@ int TrSys::buy_ticket(
       return -1;
     }
 
+    History his;
+    strcpy(his.usr, usr.c_str());
+    strcpy(his.tr_id, id.c_str());
+    his.time = time_stamp;
+    his.num = n;
+    his.start_day = start_day;
+    his.from = _from;
+    his.leave = time;
+
     int price = 0;
+    bool flag = true;
     for (; j != train.stat_num; ++j) {
       if (train.stations[j] == _to) {
         break;
@@ -401,29 +416,228 @@ int TrSys::buy_ticket(
       time += train.travel_t[j];
       time += train.stop_t[j];
       if (tr.seat_nums[j] < n) {
-        if (is_q) {
-          // add to queue
-          // add to user order
-          return 0;
-        }
+        flag = false;
       }
       price += train.prices[j] * n;
       tr.seat_nums[j] -= n;
     }
 
-    every_train.modify(tr);
+    his.to = _to;
+    his.arrive = time;
+    his.price = price;
 
-    // add to user order
-    return price;
+    if (flag) {
+      every_train.modify(tr);
+
+      his.status = 1;
+      history.insert(his);
+      // add to user order
+      return price;
+    } else {
+
+      if (is_q) {
+        // add to queue
+        // add to user order
+        his.status = 0;
+        history.insert(his);
+        queue.insert(Queue(his));
+        return 0;
+      } else {
+        return -1;
+      }
+    }
 
   } else {
     return -1;
   }
 }
 
-std::string TrSys::query_order(const std::string &usr) {}
+template <>
+vector<History> BPlusTree<History, 123>::query_order(const History &ind) {
+  Node node;
+  read_node(node, root);
+  vector<History> _res;
 
-bool TrSys::refund_ticket(const std::string &usr, int n) {}
+  if (node.is_leaf && node.size == 0) {
+    // std::cout << "null\n";
+    return _res;
+  }
+
+  while (!node.is_leaf) {
+    if (ind > node.index[node.size - 1]) {
+      read_node(node, node.child[node.size]);
+
+    } else { // child[i]:  (index[i - 1], index[i]]
+      int pos = lower_bound(node.index, node.size, ind);
+      read_node(node, node.child[pos]);
+    }
+  }
+
+  while (true) {
+    // int res = 0;
+    int i = 0;
+    int res;
+    for (; i != node.size; ++i) {
+      res = strcmp(ind.usr, node.index[i].usr);
+      if (res == 0) {
+        // auto &his = node.index[i];
+        _res.push_back(node.index[i]);
+
+      } else if (res > 0) {
+        break;
+      }
+    }
+    if (res > 0) {
+      break;
+    }
+
+    if (node.next == INT32_MAX) {
+      break;
+    }
+    read_node(node, node.next);
+  }
+
+  return _res;
+}
+
+std::string TrSys::query_order(const std::string &usr) {
+  if (accounts.usrpriv(usr) == -1) {
+    return "";
+  }
+  History ind;
+  strcpy(ind.usr, usr.c_str());
+  auto v = history.query_order(ind);
+  std::string res = "";
+  res += std::to_string(v.size()) + '\n';
+
+  for (int i = 0; i != v.size(); ++i) {
+    auto &his = v[i];
+    if (his.status == 1) {
+      res += "[success] ";
+    } else if (his.status == 0) {
+      res += "[pending] ";
+    } else {                // -1
+      res += "[refunded] "; // MHRS
+    }
+    res += std::string(his.tr_id) + ' ';
+    res += stats[his.from] + ' ';
+    res += Time(his.leave).display() + " -> ";
+    res += stats[his.to] + ' ';
+    res += Time(his.arrive).display() + ' ';
+    res += std::to_string(his.price) + ' ' + std::to_string(his.num) + '\n';
+  }
+  return res;
+}
+
+bool TrSys::refund_ticket(const std::string &usr, int n) {
+  if (accounts.usrpriv(usr) == -1) {
+    return false;
+  }
+  History ind;
+  strcpy(ind.usr, usr.c_str());
+  auto v = history.query_order(ind);
+  if (v.size() < n) {
+    return false;
+  }
+  if (v[n - 1].status == -1) {
+    return false;
+  }
+  if (v[n - 1].status == 1) { // refund
+    EveryTr tr;
+    Train train;
+    strcpy(tr.id, v[n - 1].tr_id);
+    strcpy(train.id, v[n - 1].tr_id);
+    tr.day = v[n - 1].start_day;
+    every_train.at(tr);
+    train_data.at(train);
+
+    // restate the train
+    auto &his = v[n - 1];
+    int i = 0;
+    for (; i != train.stat_num; ++i) {
+      if (train.stations[i] == his.from) {
+        break;
+      }
+    }
+
+    for (; i != train.stat_num; ++i) {
+      if (train.stations[i] == his.to) {
+        break;
+      }
+      tr.seat_nums[i] += his.num;
+    }
+    every_train.modify(tr);
+
+    //  query the queue
+
+    Queue q;
+    queue.traverse(q, true);
+    vector<Queue> finished;
+    if (queue_ticket(q)) {
+      finished.push_back(q);
+    }
+    while (queue.traverse(q)) {
+      if (queue_ticket(q)) {
+        finished.push_back(q);
+      }
+    }
+
+    for (auto it = finished.begin(); it != finished.end(); ++it) {
+      queue.erase(*it);
+      History tmp(*it);
+      history.at(tmp);
+      tmp.status = 1;
+      history.modify(tmp);
+    }
+  }
+  v[n - 1].status = -1;
+  history.modify(v[n - 1]);
+  return true;
+}
+
+bool TrSys::queue_ticket(const Queue &q) {
+  Train train;
+  strcpy(train.id, q.tr_id);
+
+  train_data.at(train);
+  // const auto _from = serials[from], _to = serials[to];
+  EveryTr tr;
+  strcpy(tr.id, q.tr_id);
+
+  // Time time(day + train.start_t);
+  // int start_day = day;
+  int j = 0;
+  for (; j != train.stat_num - 1; ++j) {
+    if (train.stations[j] == q.from) {
+      break;
+    }
+  }
+
+  tr.day = q.start_day;
+  every_train.at(tr);
+
+  bool flag = true;
+  for (; j != train.stat_num; ++j) {
+    if (train.stations[j] == q.to) {
+      break;
+    }
+    if (j == train.stat_num - 1) {
+      break;
+    }
+    if (tr.seat_nums[j] < q.num) {
+      flag = false;
+    }
+    tr.seat_nums[j] -= q.num;
+  }
+
+  if (flag) {
+    every_train.modify(tr);
+    // add to user order
+    return true;
+  } else {
+    return false;
+  }
+}
 
 void TrSys::clear() {
   train_data.clear();
@@ -431,5 +645,7 @@ void TrSys::clear() {
   every_train.clear();
   serials.clear();
   stats.clear();
+  history.clear();
+  queue.clear();
   max_serial = 0;
 }
