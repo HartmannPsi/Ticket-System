@@ -1,6 +1,7 @@
 #include "train.hpp"
 #include "account.hpp"
 #include "time.hpp"
+#include <iterator>
 #include <string>
 // for test
 #include <algorithm>
@@ -351,9 +352,323 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
   // return res
 }
 
+pair<int, int> TrSys::is_intersect(
+    const Train &t1, const Train &t2, int from_serial,
+    int to_serial) { // -1 if not, a rank in **t1, t2** otherwise
+  map<int, int> stats;
+  for (int i = from_serial + 1; i != t1.stat_num; ++i) {
+    const int &stat_serial = t1.stations[i];
+    stats.insert(
+        {stat_serial,
+         i}); // first: serial number of the station; second: the rank in t1
+  }
+
+  for (int i = 0; i != to_serial; ++i) {
+    const int &stat_serial = t2.stations[i];
+    const auto it = stats.find(stat_serial);
+    if (it != stats.end()) {
+      return {it->second, i};
+    }
+  }
+
+  return {-1, -1};
+}
+
+int TrSys::get_rank(const Train &t, int stat_serial) {
+  for (int i = 0; i != t.stat_num; ++i) {
+    if (t.stations[i] == stat_serial) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+int TrSys::total_time(
+    const Train &t,
+    int stat_serial) { // time from start station to station required
+  if (stat_serial == 0) {
+    return 0;
+  }
+  int res = t.travel_t[0];
+  for (int i = 1; i != stat_serial; ++i) {
+    res += t.travel_t[i];
+    res += t.stop_t[i - 1];
+  }
+
+  return res;
+}
+
+int TrSys::total_cost(
+    const Train &t,
+    int stat_serial) { // cost from start station to station required
+  int res = 0;
+  for (int i = 0; i != stat_serial; ++i) {
+    res += t.prices[i];
+  }
+  return res;
+}
+
+int TrSys::max_seat(const EveryTr &t, int from_serial, int to_serial) {
+  int res = INT32_MAX;
+  for (int i = from_serial; i != to_serial; ++i) {
+    res = std::min(res, t.seat_nums[i]);
+  }
+  return res;
+}
+
 std::string
 TrSys::query_transfer(const std::string &from, const std::string &to, int day,
                       bool tp) { // tp: true for time, false for cost
+  struct Ans {
+    const Train *from_train = nullptr;
+    const Train *to_train = nullptr;
+    EveryTr from_tr, to_tr;
+    int time = -1, cost = -1;
+    int i = -1, j = -1;
+    int rank1 = -1, rank2 = -1;
+
+    Ans() {}
+
+    void update_by_time(const Train &_from_train, const Train &_to_train,
+                        const EveryTr &_from_tr, const EveryTr &_to_tr,
+                        int _time, int _cost, int _i, int _j, int s1, int s2) {
+      auto update = [&]() {
+        from_train = &_from_train;
+        to_train = &_to_train;
+        from_tr = _from_tr;
+        to_tr = _to_tr;
+        time = _time;
+        cost = _cost;
+        i = _i;
+        j = _j;
+        rank1 = s1;
+        rank2 = s2;
+      };
+
+      if (time == -1 && cost == -1) {
+        update();
+        return;
+      }
+
+      if (_time < time) {
+        update();
+        return;
+      } else if (_time == time) {
+
+        if (_cost < cost) {
+          update();
+          return;
+        } else if (_cost == cost) {
+
+          const int res1 = strcmp(_from_tr.id, from_tr.id);
+          if (res1 < 0) {
+            update();
+            return;
+          } else if (res1 == 0) {
+
+            const int res2 = strcmp(_to_tr.id, to_tr.id);
+            if (res2 < 0) {
+              update();
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    void update_by_cost(const Train &_from_train, const Train &_to_train,
+                        const EveryTr &_from_tr, const EveryTr &_to_tr,
+                        int _time, int _cost, int _i, int _j, int s1, int s2) {
+      auto update = [&]() {
+        from_train = &_from_train;
+        to_train = &_to_train;
+        from_tr = _from_tr;
+        to_tr = _to_tr;
+        time = _time;
+        cost = _cost;
+        i = _i;
+        j = _j;
+        rank1 = s1;
+        rank2 = s2;
+      };
+
+      if (time == -1 && cost == -1) {
+        update();
+        return;
+      }
+
+      if (_cost < cost) {
+        update();
+        return;
+      } else if (_cost == cost) {
+
+        if (_time < time) {
+          update();
+          return;
+        } else if (_time == time) {
+
+          const int res1 = strcmp(_from_tr.id, from_tr.id);
+          if (res1 < 0) {
+            update();
+            return;
+          } else if (res1 == 0) {
+
+            const int res2 = strcmp(_to_tr.id, to_tr.id);
+            if (res2 < 0) {
+              update();
+              return;
+            }
+          }
+        }
+      }
+    }
+  } ans;
+
+  const int _from = serials[from], _to = serials[to];
+  Station tmp;
+  tmp.name = _from;
+  auto from_ids = stat_data.find_trains(tmp);
+  tmp.name = _to;
+  auto to_ids = stat_data.find_trains(tmp);
+  Train *const from_trains = new Train[from_ids.size()];
+  Train *const to_trains = new Train[to_ids.size()];
+  int *const rank_from = new int[from_ids.size()];
+  int *const rank_to = new int[to_ids.size()];
+  int *const time_from = new int[from_ids.size()];
+  int *const time_to = new int[to_ids.size()];
+  int *const cost_from = new int[from_ids.size()];
+  int *const cost_to = new int[to_ids.size()];
+
+  for (int i = 0; i != from_ids.size(); ++i) {
+    strcpy(from_trains[i].id, from_ids[i].c_str());
+    train_data.at(from_trains[i]);
+    rank_from[i] = get_rank(from_trains[i], _from);
+    time_from[i] = total_time(from_trains[i], _from);
+    cost_from[i] = total_cost(from_trains[i], _from);
+  }
+  for (int j = 0; j != to_ids.size(); ++j) {
+    strcpy(to_trains[j].id, to_ids[j].c_str());
+    train_data.at(to_trains[j]);
+    rank_to[j] = get_rank(to_trains[j], _to);
+    time_to[j] = total_time(to_trains[j], _to);
+    cost_to[j] = total_cost(to_trains[j], _to);
+  }
+
+  for (int i = 0; i != from_ids.size(); ++i) {
+    for (int j = 0; j != to_ids.size(); ++j) {
+      const auto &from_train = from_trains[i];
+      const auto &to_train = to_trains[j];
+      if (strcmp(from_train.id, to_train.id) == 0) {
+        continue;
+      }
+
+      const auto ranks =
+          is_intersect(from_train, to_train, rank_from[i], rank_to[j]);
+
+      if (ranks.first == -1 && ranks.second == -1) {
+        continue;
+      }
+      int from_day = day;
+      Time from_time(day + from_train.start_t + time_from[i]);
+      while (from_time.stamp() > day + DAY - 1) {
+        from_time -= DAY;
+        from_day -= DAY;
+      }
+      int to_day = from_day;
+      EveryTr from_tr, to_tr;
+      strcpy(from_tr.id, from_ids[i].c_str());
+      from_tr.day = from_day;
+      if (!every_train.at(from_tr)) {
+        continue;
+      }
+
+      const int arrive_trans_time =
+          from_day + total_time(from_train, ranks.first);
+      int leave_trans_time =
+          to_day + total_time(to_train, ranks.second) + to_train.start_t;
+      if (ranks.second != 0) {
+        leave_trans_time += to_train.stop_t[ranks.second - 1];
+      }
+
+      while (leave_trans_time < arrive_trans_time) {
+        leave_trans_time += DAY;
+        to_day += DAY;
+      }
+      while (leave_trans_time - DAY >= arrive_trans_time) {
+        leave_trans_time -= DAY;
+        to_day -= DAY;
+      }
+
+      strcpy(to_tr.id, to_ids[j].c_str());
+      to_tr.day = to_day;
+      if (!every_train.at(to_tr)) {
+        continue;
+      }
+
+      const int cost = (total_cost(from_train, ranks.first) - cost_from[i]) +
+                       (cost_to[j] - total_cost(to_train, ranks.second));
+      const int time = (to_day + to_train.start_t + time_to[j]) -
+                       (from_day + from_train.start_t + time_from[i] +
+                        (i == 0 ? 0 : from_train.stop_t[i - 1]));
+
+      if (tp) { // update by time
+        ans.update_by_time(from_train, to_train, from_tr, to_tr, time, cost, i,
+                           j, ranks.first, ranks.second);
+      } else { // update by cost
+        ans.update_by_cost(from_train, to_train, from_tr, to_tr, time, cost, i,
+                           j, ranks.first, ranks.second);
+      }
+    }
+  }
+
+  std::string res = "";
+  if (ans.time == -1 && ans.cost == -1) {
+    res += "0";
+  } else {
+    const std::string trans = stats[ans.from_train->stations[ans.rank1]];
+    res += std::string(ans.from_tr.id) + ' ';
+    res += from + ' ';
+    const int leave_time1 =
+        ans.from_tr.day + ans.from_train->start_t + time_from[ans.i] +
+        (ans.i == 0 ? 0 : ans.from_train->stop_t[ans.i - 1]);
+    res += Time(leave_time1).display() + " -> ";
+    const int arrive_time1 = ans.from_tr.day + ans.from_train->start_t +
+                             total_time(*(ans.from_train), ans.rank1);
+    res += trans + ' ';
+    res += Time(arrive_time1).display() + ' ';
+    res += std::to_string(max_seat(ans.from_tr, rank_from[ans.i], ans.rank1)) +
+           ' ';
+    res += std::to_string(total_cost(*(ans.from_train), ans.rank1) -
+                          cost_from[ans.i]) +
+           '\n';
+
+    res += std::string(ans.to_tr.id) + ' ';
+    res += trans + ' ';
+    const int leave_time2 =
+        ans.to_tr.day + ans.to_train->start_t +
+        total_time(*(ans.to_train), ans.rank2) +
+        (ans.rank2 == 0 ? 0 : ans.to_train->stop_t[ans.rank2 - 1]);
+    res += Time(leave_time2).display() + " -> ";
+    const int arrive_time2 =
+        ans.to_tr.day + ans.to_train->start_t + time_to[ans.j];
+    res += to + ' ';
+    res += Time(arrive_time2).display() + ' ';
+    res += std::to_string(max_seat(ans.to_tr, ans.rank2, rank_to[ans.j])) + ' ';
+    res += std::to_string(cost_to[ans.j] -
+                          total_cost(*(ans.to_train), ans.rank2)) +
+           '\n';
+  }
+
+  delete[] from_trains;
+  delete[] to_trains;
+  delete[] rank_from;
+  delete[] rank_to;
+  delete[] time_from;
+  delete[] time_to;
+  delete[] cost_from;
+  delete[] cost_to;
+
+  return res;
 }
 
 int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,

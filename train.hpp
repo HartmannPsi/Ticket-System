@@ -382,13 +382,25 @@ public:
       const std::string &from, const std::string &to, int n, bool is_q,
       int time_stamp); // -1 for failed, 0 for queue, positive for secceeded
 
-  bool queue_ticket(const Queue &q);
-
   std::string query_order(const std::string &usr);
 
   bool refund_ticket(const std::string &usr, int n);
 
   void clear();
+
+  bool queue_ticket(const Queue &q);
+
+  pair<int, int>
+  is_intersect(const Train &t1, const Train &t2, int from_serial,
+               int to_serial); // -1 if not, a rank in **t1, t2** otherwise
+
+  int get_rank(const Train &t, int stat_serial);
+
+  int total_time(const Train &t, int stat_serial);
+
+  int total_cost(const Train &t, int stat_serial);
+
+  int max_seat(const EveryTr &t, int from_serial, int to_serial);
 };
 
 #endif
