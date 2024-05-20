@@ -320,11 +320,6 @@ struct Queue {
   bool operator<=(const History &other) const { return time >= other.time; }
 };
 
-History::History(const Queue &other) {
-  strcpy(usr, other.usr);
-  time = other.time;
-}
-
 constexpr int M = 65; // M should be odd (101)
 
 struct Node {

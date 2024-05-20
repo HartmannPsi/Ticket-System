@@ -8,6 +8,11 @@
 
 extern AcSys accounts;
 
+History::History(const Queue &other) {
+  strcpy(usr, other.usr);
+  time = other.time;
+}
+
 TrSys::TrSys()
     : train_data("train.dat", "train.rec", "train.r", 4096 * 26, 512),
       stat_data("station.dat", "station.rec", "station.r"),
