@@ -14,9 +14,10 @@ History::History(const Queue &other) {
 }
 
 TrSys::TrSys()
-    : train_data("train.dat", "train.rec", "train.r", 4096 * 26, 512),
+    : train_data("train.ind", "train.rec", "train.r", "train.dat"),
       stat_data("station.dat", "station.rec", "station.r"),
-      every_train("every_train.dat", "every_train.rec", "every_train.r"),
+      every_train("every_train.dat", "every_train.rec", "every_train.r",
+                  4096 * 12, 256),
       history("history.dat", "history.rec", "history.r"),
       queue("queue.dat", "queue.rec", "queue.r") {
 
@@ -336,9 +337,15 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
   }
   // sort by key
   if (tp) {
-    std::sort(infos.begin(), infos.end(), Info::CmpByTime());
+
+    // TODO: find some way to sort the answers
+
+    // std::sort(infos.begin(), infos.end(), Info::CmpByTime());
   } else {
-    std::sort(infos.begin(), infos.end(), Info::CmpByCost());
+
+    // TODO: find some way to sort the answers
+
+    // std::sort(infos.begin(), infos.end(), Info::CmpByCost());
   }
 
   std::string res = "";
@@ -773,7 +780,7 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
 }
 
 template <>
-vector<History> BPlusTree<History, 123>::query_order(const History &ind) {
+vector<History> BPlusTree<History, 91>::query_order(const History &ind) {
   Node node;
   read_node(node, root);
   vector<History> _res;

@@ -2,6 +2,7 @@
 #ifndef TRAIN_HPP
 #define TRAIN_HPP
 
+#include "base.hpp"
 #include "bpt.hpp"
 #include "map.hpp"
 #include "time.hpp"
@@ -320,10 +321,10 @@ struct Queue {
   bool operator<=(const History &other) const { return time >= other.time; }
 };
 
-constexpr int M = 65; // M should be odd (101)
+constexpr int M = 203; // M should be odd (101)
 
 struct Node {
-  Train index[M];
+  Index index[M];
   u32 child[M];
   int size = 0;
   bool is_leaf = false;
@@ -336,11 +337,12 @@ struct Node {
 constexpr u32 BSIZE = sizeof(Node);
 
 class TrSys {
-  BPlusTree<Train, 65> train_data;
+  // BPlusTree<Train, 79> train_data; // 4096 * 24
+  Base<Train> train_data;
   BPlusTree<Station, 227> stat_data; // TODO: adjust the numbers
-  BPlusTree<EveryTr, 111> every_train;
-  BPlusTree<History, 123> history;
-  BPlusTree<Queue, 123> queue;
+  BPlusTree<EveryTr, 113> every_train;
+  BPlusTree<History, 91> history;
+  BPlusTree<Queue, 113> queue;
 
   map<std::string, int> serials;
   map<int, std::string> stats;

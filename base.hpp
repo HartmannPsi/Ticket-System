@@ -10,6 +10,7 @@
 template <typename Val, const int M = 203> class Base {
   BPlusTree<Index, M> index;
   std::fstream data;
+  const std::string file_name;
   u32 end;
 
   void read(Val &dest, u32 pos) {
@@ -25,7 +26,7 @@ template <typename Val, const int M = 203> class Base {
 public:
   Base(const std::string &index_file, const std::string &index_recycle,
        const std::string &r, const std::string &data_file)
-      : index(index_file, index_recycle, r) {
+      : index(index_file, index_recycle, r), file_name(data_file) {
     data.open(data_file);
 
     if (!data.is_open()) {
@@ -45,8 +46,8 @@ public:
     data.close();
   }
 
-  bool insert(const std::string &str, const Val &val) {
-    if (index.insert({str.c_str(), end})) {
+  bool insert(const Val &val) {
+    if (index.insert({val.id, end})) {
       write(val, end);
       end += sizeof(Val);
       return true;
@@ -55,21 +56,21 @@ public:
     }
   }
 
-  bool erase(const std::string &str) { return index.erase({str.c_str(), 0}); }
+  bool erase(const Val &val) { return index.erase({val.id, 0}); }
 
-  bool modify(const std::string &str, const Val &val) {
-    const u32 pos = index.find({str.c_str(), 0});
+  bool modify(const Val &val) {
+    Index ind(val.id, 0);
 
-    if (pos == INT32_MAX) {
+    if (!index.at(ind)) {
       return false;
-    } else {
-      write(val, pos);
-      return true;
     }
+
+    write(val, ind.pos);
+    return true;
   }
 
-  bool find(const std::string &str, Val &dest) {
-    const u32 pos = index.find({str.c_str(), 0});
+  bool at(Val &dest) {
+    const u32 pos = index.find({dest.id, 0});
 
     if (pos == INT32_MAX) {
       return false;
@@ -77,6 +78,17 @@ public:
       read(dest, pos);
       return true;
     }
+  }
+
+  bool empty() { return index.empty(); }
+
+  void clear() {
+    index.clear();
+    data.close();
+    data.open(file_name, std::ios::out);
+    data.close();
+    data.open(file_name);
+    end = 0;
   }
 };
 

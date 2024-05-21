@@ -156,10 +156,8 @@ template <typename Key, const int M> class BPlusTree {
   } cache;
 
 public:
-  BPlusTree(const std::string &index_file = "index.dat",
-            const std::string &index_recycle = "index.rec",
-            const std::string &r = ".root", u32 _BLOCK = 4096 * 2,
-            int _CACHE = 2048);
+  BPlusTree(const std::string &index_file, const std::string &index_recycle,
+            const std::string &r, u32 _BLOCK = 4096 * 2, int _CACHE = 512);
 
   ~BPlusTree();
 
@@ -902,7 +900,7 @@ u32 BPlusTree<Key, M>::find(const Key &ind) {
       res = strcmp(ind.str, node.index[i].str);
       if (res == 0) {
 
-        return node.index[i].val;
+        return node.index[i].pos;
       } else if (res < 0) {
         break;
       }
@@ -1055,7 +1053,9 @@ struct Index {
   char str[22] = {};
   u32 pos = 0;
 
-  Index(const std::string &s, int n) : pos(n) { strcpy(str, s.c_str()); }
+  Index(const std::string &s, u32 n) : pos(n) { strcpy(str, s.c_str()); }
+
+  Index(const char *const s, u32 n) : pos(n) { strcpy(str, s); };
 
   Index() {}
 

@@ -18,6 +18,10 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # create a variable which includes needed source files
 set(MY_SOURCES
     ${PROJECT_SOURCE_DIR}/main.cpp
+    ${PROJECT_SOURCE_DIR}/account.cpp
+    ${PROJECT_SOURCE_DIR}/input_process.cpp
+    ${PROJECT_SOURCE_DIR}/time.cpp
+    ${PROJECT_SOURCE_DIR}/train.cpp
 )
 
 # specify an executable, 
