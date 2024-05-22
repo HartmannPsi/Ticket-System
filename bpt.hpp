@@ -1019,10 +1019,15 @@ bool BPlusTree<Key, M>::traverse(Key &ind, bool from_begin) {
   static Node node;
 
   if (from_begin) {
+
+    read_node(node, root);
+    while (!node.is_leaf) {
+      read_node(node, node.child[0]);
+    }
     // pos = 0;
     num = 0;
-    read_node(node, 0);
-    // pos = node.next;
+    // read_node(node, 0);
+    //  pos = node.next;
 
     if (num == node.size) {
       return false;

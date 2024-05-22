@@ -1,6 +1,7 @@
 #include "train.hpp"
 #include "account.hpp"
 #include "time.hpp"
+//#include <algorithm>
 #include <string>
 //#include <algorithm>
 
@@ -48,7 +49,7 @@ TrSys::TrSys()
     : train_data("train.ind", "train.rec", "train.r", "train.dat"),
       stat_data("station.dat", "station.rec", "station.r"),
       every_train("every_train.dat", "every_train.rec", "every_train.r",
-                  4096 * 12, 256),
+                  4096 * 12, 128),
       history("history.dat", "history.rec", "history.r"),
       queue("queue.dat", "queue.rec", "queue.r") {
 
@@ -56,15 +57,19 @@ TrSys::TrSys()
 
   if (!stat_file.is_open()) {
     stat_file.open("station_serials.dat", std::ios::out);
+    stat_file.close();
+    stat_file.open("station_serials.dat");
     max_serial = 0;
 
   } else {
     stat_file.seekg(0);
     stat_file.read(reinterpret_cast<char *>(&max_serial), sizeof(int));
-    stat_file.seekg(0, std::ios::end);
-    const u32 end = stat_file.tellg();
+    // stat_file.seekg(0, std::ios::end);
+    // const u32 end = stat_file.tellg();
 
-    for (u32 i = sizeof(int); i < end; i += sizeof(Stat_serial)) {
+    int count = 0;
+    for (u32 i = sizeof(int); count != max_serial;
+         i += sizeof(Stat_serial), ++count) {
       Stat_serial stat;
       stat_file.seekg(i);
       stat_file.read(reinterpret_cast<char *>(&stat), sizeof(Stat_serial));
@@ -72,7 +77,7 @@ TrSys::TrSys()
       stats.insert({stat.serial, std::string(stat.name)});
     }
 
-    stat_file.open("station_serials.dat", std::ios::out);
+    // stat_file.open("station_serials.dat", std::ios::out);
   }
 }
 
@@ -86,9 +91,24 @@ TrSys::~TrSys() {
     Stat_serial stat;
     stat.serial = it->first;
     strcpy(stat.name, it->second.c_str());
+    // if (max_serial > 48) {
+    //   std::cout << stat.serial << " " << stat.name << '\n';
+    // }
     stat_file.seekp(i);
     stat_file.write(reinterpret_cast<const char *>(&stat), sizeof(Stat_serial));
   }
+  /*
+    if (max_serial > 48) {
+      std::cout << "in file: \n";
+      int count = 0;
+      for (u32 i = sizeof(int); count != max_serial;
+           i += sizeof(Stat_serial), ++count) {
+        Stat_serial stat;
+        stat_file.seekg(i);
+        stat_file.read(reinterpret_cast<char *>(&stat), sizeof(Stat_serial));
+        std::cout << stat.serial << " " << stat.name << '\n';
+      }
+    }*/
 
   stat_file.close();
 }
@@ -116,6 +136,9 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
       serials.insert({stations[i], max_serial});
       new_t.stations[i] = max_serial;
       ++max_serial;
+      // if (max_serial == 49) {
+      //   std::cout << "what happened?\n";
+      // }
     } else {
       new_t.stations[i] = it->second;
     }
@@ -315,6 +338,17 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
   auto train_ids = stat_data.find_trains(tmp_stat);
 
   vector<Info> infos;
+
+  /*
+  if (TIME == 13420) {
+    // std::cout << "TAG\n";
+    std::cout << query_train("LeavesofGrass", day);
+    std::cout << query_train("whatyouwanted", day);
+    std::cout << "max_serial: " << max_serial << '\n';
+    for (auto it = stats.begin(); it != stats.end(); ++it) {
+      std::cout << it->first << ' ' << it->second << '\n';
+    }
+  }*/
 
   for (int i = 0; i != train_ids.size(); ++i) {
     // auto &id = res[i];
@@ -819,9 +853,9 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
       if (train.stations[j] == _to) {
         break;
       }
-      if (j == train.stat_num - 1) {
-        break;
-      }
+      // if (j == train.stat_num - 1) {
+      //   break;
+      // }
       time += train.travel_t[j];
       if (j != 0) {
         time += train.stop_t[j - 1];
@@ -960,6 +994,9 @@ bool TrSys::refund_ticket(const std::string &usr, int n) {
   // if (TIME == 3845) {
   //   history.traverse();
   // }
+  // if (TIME == 21342) {
+  //  std::cout << query_order(usr);
+  //}
 
   if (accounts.usrpriv(usr) == -1) {
     throw "用户未登录\n";
@@ -1005,15 +1042,25 @@ bool TrSys::refund_ticket(const std::string &usr, int n) {
     every_train.modify(tr);
 
     //  query the queue
+    // if (TIME == 21342) {
+    //  std::cout << query_train("LeavesofGrass", Time(6, 28, 0, 0).stamp());
+    //  queue.traverse();
+    //}
 
     Queue q;
     queue.traverse(q, true);
     vector<Queue> finished;
     if (queue_ticket(q)) {
       finished.push_back(q);
+      // if (q.time == 19970) {
+      //   std::cout << "TAG_A\n";
+      // }
     }
     while (queue.traverse(q)) {
       if (queue_ticket(q)) {
+        // if (q.time == 19970) {
+        //   std::cout << "TAG_B\n";
+        // }
         finished.push_back(q);
       }
     }
@@ -1060,9 +1107,9 @@ bool TrSys::queue_ticket(const Queue &q) {
     if (train.stations[j] == q.to) {
       break;
     }
-    if (j == train.stat_num - 1) {
-      break;
-    }
+    // if (j == train.stat_num - 1) {
+    //   break;
+    // }
     if (tr.seat_nums[j] < q.num) {
       flag = false;
     }

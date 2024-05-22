@@ -1,4 +1,5 @@
 #pragma once
+#include <ostream>
 #ifndef TRAIN_HPP
 #define TRAIN_HPP
 
@@ -324,12 +325,17 @@ struct Queue {
 
   Queue() {}
 
+  friend std::ostream &operator<<(std::ostream &os, const Queue &obj) {
+    os << obj.time << ' ' << obj.usr << ' ' << obj.tr_id;
+    return os;
+  }
+
   bool operator==(const History &other) const { return time == other.time; }
   bool operator!=(const History &other) const { return time != other.time; }
-  bool operator>(const History &other) const { return time < other.time; }
-  bool operator<(const History &other) const { return time > other.time; }
-  bool operator>=(const History &other) const { return time <= other.time; }
-  bool operator<=(const History &other) const { return time >= other.time; }
+  bool operator>(const History &other) const { return time > other.time; }
+  bool operator<(const History &other) const { return time < other.time; }
+  bool operator>=(const History &other) const { return time >= other.time; }
+  bool operator<=(const History &other) const { return time <= other.time; }
 };
 
 constexpr int M = 73; // M should be odd (101)
