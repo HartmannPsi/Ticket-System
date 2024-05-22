@@ -1,12 +1,43 @@
 #include "train.hpp"
 #include "account.hpp"
 #include "time.hpp"
-#include <iterator>
 #include <string>
-// for test
-#include <algorithm>
+//#include <algorithm>
 
 extern AcSys accounts;
+extern int TIME;
+
+template <typename T, typename Cmp>
+int partition(vector<T> &arr, int low, int high, Cmp cmp) {
+  auto pivot = arr[low];
+  int i = low + 1, j = high;
+  while (true) {
+    while (i < high && cmp(arr[i], pivot))
+      i++;
+    while (j > low && cmp(pivot, arr[j]))
+      j--;
+    if (i >= j)
+      break;
+    std::swap(arr[i], arr[j]);
+    i++;
+    j--;
+  }
+  std::swap(arr[low], arr[j]);
+  return j;
+}
+
+template <typename T, typename Cmp>
+void quicksort(vector<T> &arr, int low, int high, Cmp cmp) {
+  if (low >= high)
+    return;
+  int position = partition(arr, low, high, cmp);
+  quicksort(arr, low, position - 1, cmp);
+  quicksort(arr, position + 1, high, cmp);
+}
+
+template <typename T, typename Cmp> void sort(vector<T> &arr, Cmp cmp) {
+  quicksort(arr, 0, arr.size() - 1, cmp);
+}
 
 History::History(const Queue &other) {
   strcpy(usr, other.usr);
@@ -79,10 +110,15 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
   new_t.seat_num = seat_num;
   strcpy(new_t.id, id.c_str());
   for (int i = 0; i != stat_num; ++i) {
-    stats.insert({max_serial, stations[i]});
-    serials.insert({stations[i], max_serial});
-    new_t.stations[i] = max_serial;
-    ++max_serial;
+    auto it = serials.find(stations[i]);
+    if (it == serials.end()) {
+      stats.insert({max_serial, stations[i]});
+      serials.insert({stations[i], max_serial});
+      new_t.stations[i] = max_serial;
+      ++max_serial;
+    } else {
+      new_t.stations[i] = it->second;
+    }
     // strcpy(new_t.stations[i], stations[i].c_str());
   }
 
@@ -100,6 +136,7 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
   if (train_data.insert(new_t)) {
     return true;
   } else {
+    throw "列车已存在";
     return false;
   }
 }
@@ -110,12 +147,14 @@ bool TrSys::delete_train(const std::string &id) {
 
   if (train_data.at(tmp)) {
     if (tmp.released) {
+      throw "列车已发布";
       return false;
     } else {
       train_data.erase(tmp);
       return true;
     }
   } else {
+    throw "列车不存在";
     return false;
   }
 }
@@ -126,6 +165,7 @@ bool TrSys::release_train(const std::string &id) {
 
   if (train_data.at(tmp)) {
     if (tmp.released) {
+      throw "列车已发布";
       return false;
     } else {
       tmp.released = true;
@@ -150,6 +190,7 @@ bool TrSys::release_train(const std::string &id) {
       return true;
     }
   } else {
+    throw "列车不存在";
     return false;
   }
 }
@@ -211,10 +252,12 @@ std::string TrSys::query_train(const std::string &id,
 
       return res;
     } else {
+      throw "不在列车运营时间范围内";
       return "";
     }
 
   } else {
+    throw "列车不存在";
     return "";
   }
 }
@@ -267,15 +310,16 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
                                 int day,
                                 bool tp) { // tp: true for time, false for cost
   const auto _from = serials[from], _to = serials[to];
-  Station tmp;
-  tmp.name = _from;
-  auto train_ids = stat_data.find_trains(tmp);
+  Station tmp_stat;
+  tmp_stat.name = _from;
+  auto train_ids = stat_data.find_trains(tmp_stat);
+
   vector<Info> infos;
 
   for (int i = 0; i != train_ids.size(); ++i) {
     // auto &id = res[i];
     Train train;
-    Info tmp;
+    Info tmp_info;
     strcpy(train.id, train_ids[i].c_str());
     train_data.at(train);
     EveryTr tr;
@@ -285,11 +329,25 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
     // train.end_sale)) {
     //   continue;
     // }
+
     if (_from == train.stations[train.stat_num - 1]) {
       continue;
     }
-    tmp.id = train_ids[i];
+    tmp_info.id = train_ids[i];
     Time time(day + train.start_t);
+
+    // while (time.stamp() < day) {
+    //   time += DAY;
+    // }
+
+    // while (time.stamp() >= day + DAY) {
+    //   time -= DAY;
+    // }
+
+    // if (TIME == 3524 && std::string(train.id) == "puzzletheNewWorld") {
+    //   std::cout << "original_time: " << time.display();
+    // }
+
     int start_day = day;
     int j = 0;
     for (; j != train.stat_num - 1; ++j) {
@@ -300,12 +358,30 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
       time += train.stop_t[j];
     }
 
-    while (time.stamp() > day + DAY - 1) {
+    // if (TIME == 3666 && train_ids[i] == "LeavesofGrass") {
+    //   std::cout << "time: " << time.display() << '\n';
+    // }
+
+    while (time.stamp() >= day + DAY) {
       start_day -= DAY;
       time -= DAY;
     }
 
-    tmp.leave = time;
+    // if (TIME == 3524 && std::string(train.id) == "puzzletheNewWorld") {
+    //   std::cout << " day: " << Time(day).display()
+    //             << " start_day: " << Time(start_day).display()
+    //             << " time: " << time.display() << '\n';
+    // }
+    /*
+        if (TIME == 3666 && train_ids[i] == "LeavesofGrass") {
+          std::cout << "j = " << j << '\n';
+          std::cout << "day: " << Time(day).display()
+                    << " start_day: " << Time(start_day).display()
+                    << " time: " << time.display() << '\n';
+          std::cout << query_train(train_ids[i], start_day) << '\n';
+        }*/
+
+    tmp_info.leave = time;
     tr.day = start_day;
     if (!every_train.at(tr)) {
       continue;
@@ -313,6 +389,9 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
 
     int seat = tr.seat_nums[j];
     int price = 0;
+    if (j != 0) {
+      time -= train.stop_t[j - 1];
+    }
     for (; j != train.stat_num; ++j) {
       if (train.stations[j] == _to) {
         break;
@@ -321,31 +400,29 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
         break;
       }
       time += train.travel_t[j];
-      time += train.stop_t[j];
+      if (j != 0) {
+        time += train.stop_t[j - 1];
+      }
       seat = std::min(seat, tr.seat_nums[j]);
       price += train.prices[j];
     }
     if (train.stations[j] != _to) {
       continue;
     }
-    tmp.arrive = time;
-    tmp.seat = seat;
-    tmp.price = price;
-    infos.push_back(tmp);
+    tmp_info.arrive = time;
+    tmp_info.seat = seat;
+    tmp_info.price = price;
+    infos.push_back(tmp_info);
 
     // get infos
   }
   // sort by key
-  if (tp) {
-
+  if (tp) { // time
     // TODO: find some way to sort the answers
-
-    // std::sort(infos.begin(), infos.end(), Info::CmpByTime());
-  } else {
-
+    sort(infos, Info::CmpByTime());
+  } else { // cost
     // TODO: find some way to sort the answers
-
-    // std::sort(infos.begin(), infos.end(), Info::CmpByCost());
+    sort(infos, Info::CmpByCost());
   }
 
   std::string res = "";
@@ -635,7 +712,7 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
 
   std::string res = "";
   if (ans.time == -1 && ans.cost == -1) {
-    res += "0";
+    res += "0\n";
   } else {
     const std::string trans = stats[ans.from_train->stations[ans.rank1]];
     res += std::string(ans.from_tr.id) + ' ';
@@ -733,6 +810,11 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
 
     int price = 0;
     bool flag = true;
+
+    if (j != 0) {
+      time -= train.stop_t[j - 1];
+    }
+
     for (; j != train.stat_num; ++j) {
       if (train.stations[j] == _to) {
         break;
@@ -741,7 +823,9 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
         break;
       }
       time += train.travel_t[j];
-      time += train.stop_t[j];
+      if (j != 0) {
+        time += train.stop_t[j - 1];
+      }
       if (tr.seat_nums[j] < n) {
         flag = false;
       }
@@ -751,7 +835,7 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
 
     his.to = _to;
     his.arrive = time;
-    his.price = price;
+    his.price = price / n;
 
     if (flag) {
       every_train.modify(tr);
@@ -787,6 +871,7 @@ vector<History> BPlusTree<History, 91>::query_order(const History &ind) {
 
   if (node.is_leaf && node.size == 0) {
     // std::cout << "null\n";
+    throw "history为空\n";
     return _res;
   }
 
@@ -800,20 +885,26 @@ vector<History> BPlusTree<History, 91>::query_order(const History &ind) {
     }
   }
 
+  // std::cout << "TAG1\n";
+
   while (true) {
     // int res = 0;
     int i = 0;
-    int res;
+    int res = 0;
     for (; i != node.size; ++i) {
-      res = strcmp(ind.usr, node.index[i].usr);
+      res = strcmp(node.index[i].usr, ind.usr);
+      // std::cout << "RES: " << res << '\n';
       if (res == 0) {
         // auto &his = node.index[i];
+
         _res.push_back(node.index[i]);
+        // std::cout << "WOW " << _res.size() << '\n';
 
       } else if (res > 0) {
         break;
       }
     }
+
     if (res > 0) {
       break;
     }
@@ -824,15 +915,23 @@ vector<History> BPlusTree<History, 91>::query_order(const History &ind) {
     read_node(node, node.next);
   }
 
+  // std::cout << "TAG1\n";
+
   return _res;
 }
 
 std::string TrSys::query_order(const std::string &usr) {
+
+  // if (TIME == 6156) {
+  //   history.traverse();
+  // }
+
   if (accounts.usrpriv(usr) == -1) {
     return "";
   }
   History ind;
   strcpy(ind.usr, usr.c_str());
+  ind.time = INT32_MAX;
   auto v = history.query_order(ind);
   std::string res = "";
   res += std::to_string(v.size()) + '\n';
@@ -857,16 +956,26 @@ std::string TrSys::query_order(const std::string &usr) {
 }
 
 bool TrSys::refund_ticket(const std::string &usr, int n) {
+
+  // if (TIME == 3845) {
+  //   history.traverse();
+  // }
+
   if (accounts.usrpriv(usr) == -1) {
+    throw "用户未登录\n";
     return false;
   }
+
   History ind;
   strcpy(ind.usr, usr.c_str());
+  ind.time = INT32_MAX;
   auto v = history.query_order(ind);
   if (v.size() < n) {
+    throw "购票记录数量不足\n";
     return false;
   }
   if (v[n - 1].status == -1) {
+    throw "已退票\n";
     return false;
   }
   if (v[n - 1].status == 1) { // refund
@@ -916,7 +1025,10 @@ bool TrSys::refund_ticket(const std::string &usr, int n) {
       tmp.status = 1;
       history.modify(tmp);
     }
+  } else { // delete from queue
+    queue.erase(Queue(v[n - 1]));
   }
+
   v[n - 1].status = -1;
   history.modify(v[n - 1]);
   return true;

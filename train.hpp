@@ -135,6 +135,11 @@ struct EveryTr {
       return day >= other.day;
     }
   }
+
+  friend std::ostream &operator<<(std::ostream &os, const EveryTr &obj) {
+    os << obj.id << ' ' << Time(obj.day).display() << '\n';
+    return os;
+  }
 };
 
 struct Station {
@@ -204,7 +209,7 @@ struct Info {
   int price, seat;
   Time leave, arrive;
   struct CmpByTime {
-    bool operator()(const Info &lhs, const Info &rhs) {
+    bool operator()(const Info &lhs, const Info &rhs) const {
       const auto t1 = lhs.arrive.stamp() - lhs.leave.stamp(),
                  t2 = rhs.arrive.stamp() - rhs.leave.stamp();
       if (t1 != t2) {
@@ -215,7 +220,7 @@ struct Info {
     }
   };
   struct CmpByCost {
-    bool operator()(const Info &lhs, const Info &rhs) {
+    bool operator()(const Info &lhs, const Info &rhs) const {
       if (lhs.price != rhs.price) {
         return lhs.price < rhs.price;
       } else {
@@ -244,6 +249,11 @@ struct History {
   History(const Queue &other);
 
   History() {}
+
+  friend std::ostream &operator<<(std::ostream &os, const History &obj) {
+    os << obj.usr << ' ' << obj.time;
+    return os;
+  }
 
   bool operator==(const History &other) const {
     const int res = strcmp(usr, other.usr);
@@ -399,6 +409,8 @@ public:
   int total_cost(const Train &t, int stat_serial);
 
   int max_seat(const EveryTr &t, int from_serial, int to_serial);
+
+  void traverse_everytr() { every_train.traverse(); }
 };
 
 #endif
