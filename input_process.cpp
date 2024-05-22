@@ -2,6 +2,7 @@
 
 extern AcSys accounts;
 extern TrSys trains;
+extern int TIME;
 
 std::string slice(const std::string &_str) {
   static int pos = 0;
@@ -87,12 +88,12 @@ void process(const std::string &input) {
   const std::string time_stamp = slice(input);
   const std::string cmd = slice();
 
-  // const int _time = std::stoi(time_stamp.substr(1, time_stamp.size() - 2));
+  TIME = std::stoi(time_stamp.substr(1, time_stamp.size() - 2));
 
   std::cout << time_stamp << ' ';
 
-  // if (_time >= 1421 && _time <= 1431) {
-  //   accounts.traverse();
+  // if (TIME == 3524) {
+  //   trains.traverse_everytr();
   // }
 
   if (cmd == "add_user") {
@@ -392,11 +393,15 @@ void process(const std::string &input) {
     while (get_info())
       ;
 
+    if (day.mon < 6) {
+      throw "无效的时间\n";
+    }
+
     const auto res = trains.query_train(id, int(day));
     if (res == "") {
       throw "-1: Failed to query train.\n";
     } else {
-      std::cout << res << '\n';
+      std::cout << res;
     }
 
   } else if (cmd == "query_ticket") {
@@ -432,7 +437,12 @@ void process(const std::string &input) {
     while (get_info())
       ;
 
-    std::cout << trains.query_ticket(from, to, int(day), _tp) << '\n';
+    if (day.mon < 6) {
+      std::cout << "0\n";
+      return;
+    }
+
+    std::cout << trains.query_ticket(from, to, int(day), _tp);
 
   } else if (cmd == "query_transfer") {
 
@@ -468,7 +478,12 @@ void process(const std::string &input) {
     while (get_info())
       ;
 
-    std::cout << trains.query_transfer(from, to, int(day), _tp) << '\n';
+    if (day.mon < 6) {
+      std::cout << "0\n";
+      return;
+    }
+
+    std::cout << trains.query_transfer(from, to, int(day), _tp);
 
   } else if (cmd == "buy_ticket") {
 
@@ -514,6 +529,10 @@ void process(const std::string &input) {
     while (get_info())
       ;
 
+    if (day.mon < 6) {
+      throw "无效的时间\n";
+    }
+
     int time = std::stoi(time_stamp.substr(1, time_stamp.size() - 2));
 
     const auto res =
@@ -538,7 +557,7 @@ void process(const std::string &input) {
     if (res == "") {
       throw "-1: Failed to query order.\n";
     } else {
-      std::cout << res << '\n';
+      std::cout << res;
     }
 
   } else if (cmd == "refund_ticket") {
