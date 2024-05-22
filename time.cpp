@@ -100,7 +100,9 @@ Time::operator int() const {
   int res = 0;
   res += int(min);
   res += int(hour) * HOUR;
-  res += int(day - 1) * DAY;
+  if (day != 0) {
+    res += int(day - 1) * DAY;
+  }
   switch (mon) {
   case 12:
     res += 30 * DAY;
@@ -148,3 +150,18 @@ std::string Time::display() const {
 
   return res;
 }
+/*
+#include <iostream>
+
+int main() {
+  Time t(0), tmp(13, 14);
+  t.mon = 8;
+  t.day = 5;
+  t.hour = 0;
+  t.min = 0;
+  std::cout << t.display() << ' ' << t.stamp() << '\n';
+  std::cout << tmp.display() << ' ' << tmp.stamp() << '\n';
+  t += tmp;
+  std::cout << t.display() << ' ' << t.stamp() << '\n';
+  return 0;
+};*/
