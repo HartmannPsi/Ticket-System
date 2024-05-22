@@ -6,6 +6,7 @@
 
 AcSys accounts;
 TrSys trains;
+int TIME;
 
 int main() {
 #ifndef DEBUG
