@@ -2,6 +2,7 @@
 #ifndef TRAIN_HPP
 #define TRAIN_HPP
 
+#include "account.hpp"
 #include "base.hpp"
 #include "bpt.hpp"
 #include "map.hpp"
@@ -321,10 +322,10 @@ struct Queue {
   bool operator<=(const History &other) const { return time >= other.time; }
 };
 
-constexpr int M = 203; // M should be odd (101)
+constexpr int M = 73; // M should be odd (101)
 
 struct Node {
-  Index index[M];
+  Account index[M];
   u32 child[M];
   int size = 0;
   bool is_leaf = false;

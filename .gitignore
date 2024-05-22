@@ -1,8 +1,13 @@
 testcases_bpt/
 build/
-testcases_ts/
+testcases/
 clear
 utf_test.cpp
 strcheck.hpp
 strcheck.cpp
 code
+simple_testcases/
+run-test
+bpt_old.hpp
+bpt_new.hpp
+test_logs/

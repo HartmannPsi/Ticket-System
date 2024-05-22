@@ -101,6 +101,7 @@ public:
       auto tmp = pos;
       pos = pos->next;
       delete tmp;
+      tmp = nullptr;
     }
     s = 0;
   }

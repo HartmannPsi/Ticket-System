@@ -70,12 +70,14 @@ public:
   }
 
   bool at(Val &dest) {
-    const u32 pos = index.find({dest.id, 0});
 
-    if (pos == INT32_MAX) {
+    Index ind(dest.id, 0);
+    // const u32 pos = index.find({dest.id, 0});
+
+    if (!index.at(ind)) {
       return false;
     } else {
-      read(dest, pos);
+      read(dest, ind.pos);
       return true;
     }
   }

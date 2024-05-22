@@ -87,7 +87,13 @@ void process(const std::string &input) {
   const std::string time_stamp = slice(input);
   const std::string cmd = slice();
 
+  // const int _time = std::stoi(time_stamp.substr(1, time_stamp.size() - 2));
+
   std::cout << time_stamp << ' ';
+
+  // if (_time >= 1421 && _time <= 1431) {
+  //   accounts.traverse();
+  // }
 
   if (cmd == "add_user") {
 

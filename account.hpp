@@ -12,6 +12,12 @@ struct Account { // M = 73
   char mail[31] = {};
   int privilege = 0;
 
+  friend std::ostream &operator<<(std::ostream &os, const Account &obj) {
+    os << obj.username << " -p " << obj.password << " -n " << obj.name << " -m "
+       << obj.mail << " -g " << obj.privilege;
+    return os;
+  }
+
   Account(const std::string &usr, const std::string &psw, const std::string &n,
           const std::string &m, int k)
       : privilege(k) {
@@ -75,7 +81,7 @@ struct Account { // M = 73
 //                                 "accounts.root");
 
 class AcSys {
-  BPlusTree<Account, 73> data;
+  BPlusTree<Account, 73> data;     // it should be 73
   map<std::string, int> log_table; // string: username, int: privilege
 
 public:
@@ -103,6 +109,8 @@ public:
   int usrpriv(const std::string &usr) const; // 0-10 if logged in, -1 if not
 
   void clear();
+
+  void traverse() { data.traverse(); }
 };
 
 #endif

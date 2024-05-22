@@ -97,6 +97,11 @@ template <typename Key, const int M> class BPlusTree {
 
     ~LRUCache() { clear(); }
 
+    void clear_no_write() {
+      list.clear();
+      table.clear();
+    }
+
     Node *find(u32 pos) {
       auto res = table.find(pos);
 
@@ -157,7 +162,7 @@ template <typename Key, const int M> class BPlusTree {
 
 public:
   BPlusTree(const std::string &index_file, const std::string &index_recycle,
-            const std::string &r, u32 _BLOCK = 4096 * 2, int _CACHE = 512);
+            const std::string &r, u32 _BLOCK = 4096 * 2, int _CACHE = 128);
 
   ~BPlusTree();
 
@@ -168,6 +173,8 @@ public:
   u32 find(const Key &ind);
 
   bool traverse(Key &ind, bool from_begin = false);
+
+  void traverse();
 
   int count(const Key &ind);
 
@@ -199,14 +206,18 @@ template <typename Key>
 int upper_bound(const Key *const beg, int size, const Key &index);
 
 template <typename Key, const int M> void BPlusTree<Key, M>::clear() {
+  cache.clear();
   ind_file.close();
   ind_rec.close();
   _root.close();
 
+  std::remove(ind.c_str());
+  std::remove(_ind_rec.c_str());
+  std::remove(_r.c_str());
+
   ind_file.open(ind, std::ios::out);
   ind_file.close();
   ind_file.open(ind, std::ios::in | std::ios::out);
-
   ind_rec.open(_ind_rec, std::ios::out);
   _root.open(_r, std::ios::out);
 
@@ -372,6 +383,7 @@ bool BPlusTree<Key, M>::insert(const Key &ind) {
     return true;
   }
   // split leaves
+  // std::cout << "SPLIT\n";
 
   if (node[i].index[node[i].size - 1] <= ind) {
     node[i].index[node[i].size] = ind;
@@ -544,6 +556,25 @@ bool BPlusTree<Key, M>::erase(const Key &ind) {
 
   if (node[i].index[_pos] != ind) {
     return false;
+  }
+
+  if (_pos == node[i].size - 1 && node[i].size > 1) {
+
+    const Key &new_ind = node[i].index[node[i].size - 2];
+    for (int j = 0; j != i; ++j) {
+
+      if (ind > node[j].index[node[j].size - 1]) {
+        continue;
+      }
+
+      int change_pos = lower_bound(node[j].index, node[j].size, ind);
+
+      if (node[j].index[change_pos] == ind) {
+        node[j].index[change_pos] = new_ind;
+        // std::cout << "DONE\n";
+        write_node(node[j], pos[j]);
+      }
+    }
   }
 
   for (int j = _pos; j != node[i].size - 1; ++j) {
@@ -960,13 +991,13 @@ bool BPlusTree<Key, M>::modify(const Key &ind) {
 
   while (!node.is_leaf) {
     if (ind > node.index[node.size - 1]) {
-      read_node(node, node.child[node.size]);
       pos = node.child[node.size];
+      read_node(node, node.child[node.size]);
 
     } else { // child[i]:  (index[i - 1], index[i]]
       int _pos = lower_bound(node.index, node.size, ind);
-      read_node(node, node.child[_pos]);
       pos = node.child[_pos];
+      read_node(node, node.child[_pos]);
     }
   }
 
@@ -1016,6 +1047,45 @@ bool BPlusTree<Key, M>::traverse(Key &ind, bool from_begin) {
     ind = node.index[num];
     ++num;
     return true;
+  }
+}
+
+template <typename Key, const int M> void BPlusTree<Key, M>::traverse() {
+  Node node;
+  u32 pos = root;
+  int height = 1;
+  read_node(node, root);
+
+  std::cout << "ROOT: " << root << " SIZE: " << node.size << '\n';
+  for (int i = 0; i != node.size; ++i) {
+    std::cout << node.index[i] << '\t';
+  }
+  std::cout << "\nEND OF BLOCK\n";
+
+  while (!node.is_leaf) {
+    if (node.size == 0) {
+      std::cout << "SIZE ZERO!!!\n";
+      return;
+    }
+    pos = node.child[0];
+    read_node(node, node.child[0]);
+    ++height;
+  }
+
+  std::cout << "HEIGHT: " << height << '\n';
+
+  while (true) {
+    std::cout << "ADDR: " << pos << " SIZE: " << node.size << '\n';
+    for (int i = 0; i != node.size; ++i) {
+      std::cout << node.index[i] << '\n';
+    }
+    std::cout << "\nEND OF BLOCK\n";
+    if (node.next == INT32_MAX) {
+      break;
+    }
+    pos = node.next;
+
+    read_node(node, node.next);
   }
 }
 

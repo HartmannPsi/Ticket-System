@@ -2,13 +2,13 @@
 #include <iostream>
 #include <string>
 
-#define DEBUG
+//#define DEBUG
 
 AcSys accounts;
 TrSys trains;
 
 int main() {
-#ifdef DEBUG
+#ifndef DEBUG
   std::ios::sync_with_stdio(false);
   std::cin.tie(nullptr);
   std::cout.tie(nullptr);
@@ -20,13 +20,22 @@ int main() {
 
     try {
       process(input);
-    } catch (const std::string &str) {
+    }
+#ifdef DEBUG
+    catch (const std::string &str) {
       std::cout << "[Error] " << str;
     } catch (const char *const str) {
       std::cout << "[Error] " << str;
     } catch (...) {
       std::cout << "[Error] Unkown Exception.\n";
     }
+#endif
+#ifndef DEBUG
+    catch (...) {
+      std::cout << "-1\n";
+    }
+
+#endif
   }
 
   return 0;
