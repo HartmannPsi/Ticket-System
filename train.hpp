@@ -417,6 +417,26 @@ public:
   int max_seat(const EveryTr &t, int from_serial, int to_serial);
 
   void traverse_everytr() { every_train.traverse(); }
+
+  void traverse_stations() {
+    for (auto it = stats.cbegin(); it != stats.cend(); ++it) {
+      // if (it->second == "江西省瑞昌市" || it->second == "海南省三亚市") {
+      //   std::cout << "\nLOOK!\n";
+      // }
+      std::cout << it->first << ' ' << it->second << '\n';
+    }
+
+    std::cout << "===================\n";
+
+    for (auto it = serials.cbegin(); it != serials.cend(); ++it) {
+      // if (it->first == "江西省瑞昌市" || it->first == "海南省三亚市") {
+      //   std::cout << "\nLOOK!\n";
+      // }
+      std::cout << it->first << ' ' << it->second << '\n';
+    }
+
+    std::cout << "max_serial: " << max_serial << '\n';
+  }
 };
 
 #endif

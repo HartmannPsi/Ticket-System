@@ -75,7 +75,9 @@ TrSys::TrSys()
       stats.insert({stat.serial, std::string(stat.name)});
     }
 
-    // stat_file.open("station_serials.dat", std::ios::out);
+    // if (max_serial > 100) {
+    //   traverse_stations();
+    // }
   }
 }
 
@@ -117,7 +119,19 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
                       int start_sale, int end_sale,
                       char type) { // if stat_num == 2, then stop_t = nullptr
 
+  // if (TIME == 46204) {
+  //   std::cout << query_train(id, start_sale);
+  // }
+
   Train new_t;
+
+  strcpy(new_t.id, id.c_str());
+
+  if (train_data.at(new_t)) {
+    throw "列车已存在";
+    return false;
+  }
+
   new_t.released = false;
   new_t.stat_num = stat_num;
   // new_t.seat_num = seat_num;
@@ -126,7 +140,7 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
   new_t.end_sale = end_sale;
   new_t.type = type;
   new_t.seat_num = seat_num;
-  strcpy(new_t.id, id.c_str());
+
   for (int i = 0; i != stat_num; ++i) {
     auto it = serials.find(stations[i]);
     if (it == serials.end()) {
@@ -134,8 +148,9 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
       serials.insert({stations[i], max_serial});
       new_t.stations[i] = max_serial;
       ++max_serial;
-      // if (max_serial == 49) {
-      //   std::cout << "what happened?\n";
+      // if (max_serial > 126) {
+      //   auto tmp=
+      //   std::cout << ;
       // }
     } else {
       new_t.stations[i] = it->second;
@@ -330,12 +345,22 @@ vector<std::string> BPlusTree<Station, 227>::find_trains(const Station &ind) {
 std::string TrSys::query_ticket(const std::string &from, const std::string &to,
                                 int day,
                                 bool tp) { // tp: true for time, false for cost
-  const auto _from = serials[from], _to = serials[to];
+
+  auto it_from = serials.find(from), it_to = serials.find(to);
+  if (it_from == serials.end() || it_to == serials.end()) {
+    return "0\n";
+  }
+  const auto _from = it_from->second, _to = it_to->second;
+
   Station tmp_stat;
   tmp_stat.name = _from;
   auto train_ids = stat_data.find_trains(tmp_stat);
 
   vector<Info> infos;
+
+  if (TIME == 56385) {
+    traverse_stations();
+  }
 
   /*
   if (TIME == 13420) {
@@ -529,9 +554,9 @@ int TrSys::total_cost(
   return res;
 }
 
-int TrSys::max_seat(const EveryTr &t, int from_serial, int to_serial) {
+int TrSys::max_seat(const EveryTr &t, int from_rank, int to_rank) {
   int res = INT32_MAX;
-  for (int i = from_serial; i != to_serial; ++i) {
+  for (int i = from_rank; i != to_rank; ++i) {
     res = std::min(res, t.seat_nums[i]);
   }
   return res;
@@ -645,7 +670,12 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
     }
   } ans;
 
-  const int _from = serials[from], _to = serials[to];
+  auto it_from = serials.find(from), it_to = serials.find(to);
+  if (it_from == serials.end() || it_to == serials.end()) {
+    return "0\n";
+  }
+  const auto _from = it_from->second, _to = it_to->second;
+  // const int _from = serials[from], _to = serials[to];
   Station tmp;
   tmp.name = _from;
   auto from_ids = stat_data.find_trains(tmp);
@@ -742,8 +772,7 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
       const int cost = (total_cost(from_train, ranks.first) - cost_from[i]) +
                        (cost_to[j] - total_cost(to_train, ranks.second));
       const int time = (to_day + to_train.start_t + time_to[j]) -
-                       (from_day + from_train.start_t + time_from[i] +
-                        (i == 0 ? 0 : from_train.stop_t[i - 1]));
+                       (from_day + from_train.start_t + time_from[i]);
 
       if (tp) { // update by time
         ans.update_by_time(from_train, to_train, from_tr, to_tr, time, cost, i,
@@ -820,7 +849,12 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
   strcpy(train.id, id.c_str());
 
   if (train_data.at(train) && train.released) {
-    const auto _from = serials[from], _to = serials[to];
+    auto it_from = serials.find(from), it_to = serials.find(to);
+    if (it_from == serials.end() || it_to == serials.end()) {
+      return -1;
+    }
+    const auto _from = it_from->second, _to = it_to->second;
+    // const auto _from = serials[from], _to = serials[to];
     EveryTr tr;
     strcpy(tr.id, id.c_str());
 
@@ -968,9 +1002,10 @@ vector<History> BPlusTree<History, 91>::query_order(const History &ind) {
 
 std::string TrSys::query_order(const std::string &usr) {
 
-  // if (TIME == 6156) {
-  //   history.traverse();
-  // }
+  // if (TIME == 27893) {
+  //  history.traverse();
+  //  traverse_stations();
+  //}
 
   if (accounts.usrpriv(usr) == -1) {
     return "";
