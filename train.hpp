@@ -1,5 +1,4 @@
 #pragma once
-#include <ostream>
 #ifndef TRAIN_HPP
 #define TRAIN_HPP
 
@@ -296,6 +295,94 @@ struct Info {
 struct Stat_serial {
   char name[31] = {};
   int serial = 0;
+
+  Stat_serial() {}
+
+  Stat_serial(const std::string &str) { strcpy(name, str.c_str()); }
+
+  bool operator==(const Stat_serial &rhs) const {
+    const int res = strcmp(name, rhs.name);
+    return res == 0;
+  }
+
+  bool operator!=(const Stat_serial &rhs) const {
+    const int res = strcmp(name, rhs.name);
+    return res != 0;
+  }
+
+  bool operator<=(const Stat_serial &rhs) const {
+    const int res = strcmp(name, rhs.name);
+    return res <= 0;
+  }
+
+  bool operator>=(const Stat_serial &rhs) const {
+    const int res = strcmp(name, rhs.name);
+    return res >= 0;
+  }
+
+  bool operator<(const Stat_serial &rhs) const {
+    const int res = strcmp(name, rhs.name);
+    return res < 0;
+  }
+
+  bool operator>(const Stat_serial &rhs) const {
+    const int res = strcmp(name, rhs.name);
+    return res > 0;
+  }
+};
+
+struct StatMemoryRiver {
+  std::fstream file;
+
+  StatMemoryRiver() {
+    file.open("stats");
+    if (!file.is_open()) {
+      file.open("stats", std::ios::out);
+      file.close();
+      file.open("stats");
+    }
+  }
+
+  ~StatMemoryRiver() { file.close(); }
+
+  bool at(Stat_serial &dest) {
+    u32 pos = u32(dest.serial) * sizeof(Stat_serial);
+    file.seekg(pos);
+    file.read(reinterpret_cast<char *>(&dest), sizeof(Stat_serial));
+    return true;
+  }
+
+  bool insert(const Stat_serial &ind) {
+    u32 pos = u32(ind.serial) * sizeof(Stat_serial);
+    file.seekp(pos);
+    file.write(reinterpret_cast<const char *>(&ind), sizeof(Stat_serial));
+    return true;
+  }
+
+  void clear() {
+    file.close();
+    file.open("stats", std::ios::out);
+    file.close();
+    file.open("stats");
+  }
+
+  void traverse(int max_serial) {
+    u32 pos = 0;
+    Stat_serial tmp;
+    for (; pos != u32(max_serial) * sizeof(Stat_serial);
+         pos += sizeof(Stat_serial)) {
+      file.seekg(pos);
+      file.read(reinterpret_cast<char *>(&tmp), sizeof(Stat_serial));
+      std::cout << tmp.serial << ' ' << tmp.name << '\n';
+    }
+  }
+
+  std::string operator[](int n) {
+    Stat_serial tmp;
+    tmp.serial = n;
+    at(tmp);
+    return std::string(tmp.name);
+  }
 };
 
 struct Queue;
@@ -496,10 +583,10 @@ public:
   }
 };
 
-constexpr int M = 169; // M should be odd (101)
+constexpr int M = 185; // M should be odd (101)
 
 struct Node {
-  EveryTrIndex index[M];
+  Stat_serial index[M];
   u32 child[M];
   int size = 0;
   bool is_leaf = false;
@@ -519,8 +606,8 @@ class TrSys {
   BPlusTree<History, 91> history;
   BPlusTree<Queue, 113> queue;
 
-  map<std::string, int> serials;
-  map<int, std::string> stats;
+  BPlusTree<Stat_serial, 185> serials;
+  StatMemoryRiver stats;
   int max_serial = 0;
   std::fstream stat_file;
 
@@ -575,26 +662,26 @@ public:
   int max_seat(const EveryTr &t, int from_serial, int to_serial);
 
   // void traverse_everytr() { every_train.traverse(); }
+  /*
+    void traverse_stations() {
+      for (auto it = stats.cbegin(); it != stats.cend(); ++it) {
+        // if (it->second == "江西省瑞昌市" || it->second == "海南省三亚市") {
+        //   std::cout << "\nLOOK!\n";
+        // }
+        std::cout << it->first << ' ' << it->second << '\n';
+      }
 
-  void traverse_stations() {
-    for (auto it = stats.cbegin(); it != stats.cend(); ++it) {
-      // if (it->second == "江西省瑞昌市" || it->second == "海南省三亚市") {
-      //   std::cout << "\nLOOK!\n";
-      // }
-      std::cout << it->first << ' ' << it->second << '\n';
-    }
+      std::cout << "===================\n";
 
-    std::cout << "===================\n";
+      for (auto it = serials.cbegin(); it != serials.cend(); ++it) {
+        // if (it->first == "江西省瑞昌市" || it->first == "海南省三亚市") {
+        //   std::cout << "\nLOOK!\n";
+        // }
+        std::cout << it->first << ' ' << it->second << '\n';
+      }
 
-    for (auto it = serials.cbegin(); it != serials.cend(); ++it) {
-      // if (it->first == "江西省瑞昌市" || it->first == "海南省三亚市") {
-      //   std::cout << "\nLOOK!\n";
-      // }
-      std::cout << it->first << ' ' << it->second << '\n';
-    }
-
-    std::cout << "max_serial: " << max_serial << '\n';
-  }
+      std::cout << "max_serial: " << max_serial << '\n';
+    }*/
 };
 
 #endif
