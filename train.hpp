@@ -404,7 +404,7 @@ public:
 
   bool queue_ticket(const Queue &q);
 
-  pair<int, int>
+  vector<pair<int, int>>
   is_intersect(const Train &t1, const Train &t2, int from_serial,
                int to_serial); // -1 if not, a rank in **t1, t2** otherwise
 

@@ -498,9 +498,10 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
   // return res
 }
 
-pair<int, int> TrSys::is_intersect(
+vector<pair<int, int>> TrSys::is_intersect(
     const Train &t1, const Train &t2, int from_serial,
     int to_serial) { // -1 if not, a rank in **t1, t2** otherwise
+  vector<pair<int, int>> res;
   map<int, int> stats;
   for (int i = from_serial + 1; i != t1.stat_num; ++i) {
     const int &stat_serial = t1.stations[i];
@@ -513,11 +514,11 @@ pair<int, int> TrSys::is_intersect(
     const int &stat_serial = t2.stations[i];
     const auto it = stats.find(stat_serial);
     if (it != stats.end()) {
-      return {it->second, i};
+      res.push_back({it->second, i});
     }
   }
 
-  return {-1, -1};
+  return res;
 }
 
 int TrSys::get_rank(const Train &t, int stat_serial) {
@@ -670,10 +671,10 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
     }
   } ans;
 
-  if (TIME == 256022) {
-    std::cout << query_train("motion", Time(8, 2, 0, 0).stamp());
-    std::cout << query_train("Withwhistlingwinds", Time(8, 3, 0, 0).stamp());
-  }
+  // if (TIME == 256022) {
+  //   std::cout << query_train("motion", Time(8, 2, 0, 0).stamp());
+  //   std::cout << query_train("Withwhistlingwinds", Time(8, 3, 0, 0).stamp());
+  // }
 
   auto it_from = serials.find(from), it_to = serials.find(to);
   if (it_from == serials.end() || it_to == serials.end()) {
@@ -720,13 +721,16 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
         continue;
       }
 
-      const auto ranks =
+      const auto _ranks =
           is_intersect(from_train, to_train, rank_from[i], rank_to[j]);
+
+      if (_ranks.empty()) {
+        continue;
+      }
       //
-      {
-        if (ranks.first == -1 && ranks.second == -1) {
-          continue;
-        }
+      for (int k = 0; k != _ranks.size(); ++k) {
+        auto &ranks = _ranks[k];
+
         int from_day = day;
         Time from_time(day + from_train.start_t + time_from[i]);
         while (from_time.stamp() > day + DAY - 1) {
