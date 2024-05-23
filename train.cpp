@@ -670,6 +670,11 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
     }
   } ans;
 
+  if (TIME == 256022) {
+    std::cout << query_train("motion", Time(8, 2, 0, 0).stamp());
+    std::cout << query_train("Withwhistlingwinds", Time(8, 3, 0, 0).stamp());
+  }
+
   auto it_from = serials.find(from), it_to = serials.find(to);
   if (it_from == serials.end() || it_to == serials.end()) {
     return "0\n";
@@ -717,69 +722,56 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
 
       const auto ranks =
           is_intersect(from_train, to_train, rank_from[i], rank_to[j]);
+      //
+      {
+        if (ranks.first == -1 && ranks.second == -1) {
+          continue;
+        }
+        int from_day = day;
+        Time from_time(day + from_train.start_t + time_from[i]);
+        while (from_time.stamp() > day + DAY - 1) {
+          from_time -= DAY;
+          from_day -= DAY;
+        }
+        int to_day = to_train.start_sale;
+        EveryTr from_tr, to_tr;
+        strcpy(from_tr.id, from_ids[i].c_str());
+        from_tr.day = from_day;
+        if (!every_train.at(from_tr)) {
+          continue;
+        }
 
-      if (ranks.first == -1 && ranks.second == -1) {
-        continue;
-      }
-      int from_day = day;
-      Time from_time(day + from_train.start_t + time_from[i]);
-      while (from_time.stamp() > day + DAY - 1) {
-        from_time -= DAY;
-        from_day -= DAY;
-      }
-      int to_day = to_train.start_sale;
-      EveryTr from_tr, to_tr;
-      strcpy(from_tr.id, from_ids[i].c_str());
-      from_tr.day = from_day;
-      if (!every_train.at(from_tr)) {
-        continue;
-      }
+        const int arrive_trans_time =
+            from_day + total_time(from_train, ranks.first) + from_train.start_t;
+        int leave_trans_time =
+            to_day + total_time(to_train, ranks.second) + to_train.start_t;
+        if (ranks.second != 0) {
+          leave_trans_time += to_train.stop_t[ranks.second - 1];
+        }
 
-      const int arrive_trans_time =
-          from_day + total_time(from_train, ranks.first);
-      int leave_trans_time =
-          to_day + total_time(to_train, ranks.second) + to_train.start_t;
-      if (ranks.second != 0) {
-        leave_trans_time += to_train.stop_t[ranks.second - 1];
-      }
+        while (leave_trans_time < arrive_trans_time) {
+          leave_trans_time += DAY;
+          to_day += DAY;
+        }
 
-      while (leave_trans_time < arrive_trans_time) {
-        leave_trans_time += DAY;
-        to_day += DAY;
-      }
-      /*
-      while (leave_trans_time - DAY >= arrive_trans_time) {
-        leave_trans_time -= DAY;
-        to_day -= DAY;
-      }*/
+        strcpy(to_tr.id, to_ids[j].c_str());
+        to_tr.day = to_day;
+        if (!every_train.at(to_tr)) {
+          continue;
+        }
 
-      // if (TIME == 29538 && from_ids[i] == "INSCRIPTIONS" &&
-      //     to_ids[j] == "LEAVESOFGRASS") {
-      //   std::cout << query_train("INSCRIPTIONS", from_day);
-      //   std::cout << query_train("LEAVESOFGRASS", to_day);
-      // }
+        const int cost = (total_cost(from_train, ranks.first) - cost_from[i]) +
+                         (cost_to[j] - total_cost(to_train, ranks.second));
+        const int time = (to_day + to_train.start_t + time_to[j]) -
+                         (from_day + from_train.start_t + time_from[i]);
 
-      // if (to_day > to_train.end_sale) {
-      //   continue;
-      // }
-
-      strcpy(to_tr.id, to_ids[j].c_str());
-      to_tr.day = to_day;
-      if (!every_train.at(to_tr)) {
-        continue;
-      }
-
-      const int cost = (total_cost(from_train, ranks.first) - cost_from[i]) +
-                       (cost_to[j] - total_cost(to_train, ranks.second));
-      const int time = (to_day + to_train.start_t + time_to[j]) -
-                       (from_day + from_train.start_t + time_from[i]);
-
-      if (tp) { // update by time
-        ans.update_by_time(from_train, to_train, from_tr, to_tr, time, cost, i,
-                           j, ranks.first, ranks.second);
-      } else { // update by cost
-        ans.update_by_cost(from_train, to_train, from_tr, to_tr, time, cost, i,
-                           j, ranks.first, ranks.second);
+        if (tp) { // update by time
+          ans.update_by_time(from_train, to_train, from_tr, to_tr, time, cost,
+                             i, j, ranks.first, ranks.second);
+        } else { // update by cost
+          ans.update_by_cost(from_train, to_train, from_tr, to_tr, time, cost,
+                             i, j, ranks.first, ranks.second);
+        }
       }
     }
   }
@@ -792,8 +784,7 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
     res += std::string(ans.from_tr.id) + ' ';
     res += from + ' ';
     const int leave_time1 =
-        ans.from_tr.day + ans.from_train->start_t + time_from[ans.i] +
-        (ans.i == 0 ? 0 : ans.from_train->stop_t[ans.i - 1]);
+        ans.from_tr.day + ans.from_train->start_t + time_from[ans.i];
     res += Time(leave_time1).display() + " -> ";
     const int arrive_time1 = ans.from_tr.day + ans.from_train->start_t +
                              total_time(*(ans.from_train), ans.rank1);
@@ -848,6 +839,10 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
   Train train;
   strcpy(train.id, id.c_str());
 
+  // if (TIME == 109770) {
+  //   std::cout << query_train(id, day);
+  // }
+
   if (train_data.at(train) && train.released) {
     auto it_from = serials.find(from), it_to = serials.find(to);
     if (it_from == serials.end() || it_to == serials.end()) {
@@ -867,6 +862,10 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
       }
       time += train.travel_t[j];
       time += train.stop_t[j];
+    }
+
+    if (train.stations[j] != _from) {
+      return -1;
     }
 
     while (time.stamp() > day + DAY - 1) {
@@ -911,6 +910,10 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
       }
       price += train.prices[j] * n;
       tr.seat_nums[j] -= n;
+    }
+
+    if (train.stations[j] != _to) {
+      return -1;
     }
 
     his.to = _to;
