@@ -1000,7 +1000,7 @@ vector<History> BPlusTree<History, 91>::query_order(const History &ind) {
 
   if (node.is_leaf && node.size == 0) {
     // std::cout << "null\n";
-    throw "history为空\n";
+    // throw "history为空\n";
     return _res;
   }
 

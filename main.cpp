@@ -1,3 +1,5 @@
+#pragma GCC optimize(3)
+//#pragma GCC optimize(3, "Ofast", "inline")
 #include "headers.hpp"
 #include <iostream>
 #include <string>
