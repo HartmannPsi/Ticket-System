@@ -143,6 +143,66 @@ struct EveryTr {
   }
 };
 
+struct EveryTrIndex {
+  char id[21] = {};
+  // int seat_nums[99] = {};
+  int day = 0;
+  u32 pos = 0;
+
+  EveryTrIndex() {}
+
+  EveryTrIndex(const EveryTr &other) {
+    strcpy(id, other.id);
+    day = other.day;
+  }
+
+  bool operator==(const EveryTrIndex &other) const {
+    const int res = strcmp(id, other.id);
+    return res == 0 && day == other.day;
+  }
+
+  bool operator!=(const EveryTrIndex &other) const {
+    const int res = strcmp(id, other.id);
+    return res != 0 || day != other.day;
+  }
+
+  bool operator<(const EveryTrIndex &other) const {
+    const int res = strcmp(id, other.id);
+    if (res != 0) {
+      return res < 0;
+    } else {
+      return day < other.day;
+    }
+  }
+
+  bool operator<=(const EveryTrIndex &other) const {
+    const int res = strcmp(id, other.id);
+    if (res != 0) {
+      return res < 0;
+    } else {
+      return day <= other.day;
+    }
+  }
+
+  bool operator>(const EveryTrIndex &other) const {
+    const int res = strcmp(id, other.id);
+    if (res != 0) {
+      return res > 0;
+    } else {
+      return day > other.day;
+    }
+  }
+
+  bool operator>=(const EveryTrIndex &other) const {
+    const int res = strcmp(id, other.id);
+    if (res != 0) {
+      return res > 0;
+    } else {
+      return day >= other.day;
+    }
+  }
+};
+
 struct Station {
   int name = -1;
   char train_id[21] = {};
@@ -338,10 +398,108 @@ struct Queue {
   bool operator<=(const History &other) const { return time <= other.time; }
 };
 
-constexpr int M = 73; // M should be odd (101)
+template <> class Base<EveryTr> { // M = 169
+  BPlusTree<EveryTrIndex, 169> index;
+  std::fstream data;
+  const std::string file_name;
+  u32 end;
+  // using Val = EveryTr;
+
+  void read(EveryTr &dest, u32 pos) {
+    data.seekg(pos);
+    data.read(reinterpret_cast<char *>(&dest), sizeof(EveryTr));
+  }
+
+  void write(const EveryTr &src, u32 pos) {
+    data.seekp(pos);
+    data.write(reinterpret_cast<const char *>(&src), sizeof(EveryTr));
+  }
+
+public:
+  Base(const std::string &index_file, const std::string &index_recycle,
+       const std::string &r, const std::string &data_file)
+      : index(index_file, index_recycle, r), file_name(data_file) {
+    data.open(data_file);
+
+    if (!data.is_open()) {
+      data.open((data_file), std::ios::out);
+      data.close();
+      data.open(data_file);
+      end = sizeof(u32);
+    } else {
+      data.seekg(0);
+      data.read(reinterpret_cast<char *>(&end), sizeof(u32));
+    }
+  }
+
+  ~Base() {
+    data.seekp(0);
+    data.write(reinterpret_cast<const char *>(&end), sizeof(u32));
+    data.close();
+  }
+
+  bool insert(const EveryTr &val) {
+    EveryTrIndex ind(val);
+    ind.pos = end;
+
+    if (index.at(ind)) {
+      return false;
+    }
+
+    if (index.insert(ind)) {
+      write(val, end);
+      end += sizeof(EveryTr);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  bool erase(const EveryTr &val) {
+    EveryTrIndex ind(val);
+    return index.erase(ind);
+  }
+
+  bool modify(const EveryTr &val) {
+    EveryTrIndex ind(val);
+
+    if (!index.at(ind)) {
+      return false;
+    }
+
+    write(val, ind.pos);
+    return true;
+  }
+
+  bool at(EveryTr &dest) {
+
+    EveryTrIndex ind(dest);
+    // const u32 pos = index.find({dest.id, 0});
+
+    if (!index.at(ind)) {
+      return false;
+    } else {
+      read(dest, ind.pos);
+      return true;
+    }
+  }
+
+  bool empty() { return index.empty(); }
+
+  void clear() {
+    index.clear();
+    data.close();
+    data.open(file_name, std::ios::out);
+    data.close();
+    data.open(file_name);
+    end = 0;
+  }
+};
+
+constexpr int M = 169; // M should be odd (101)
 
 struct Node {
-  Account index[M];
+  EveryTrIndex index[M];
   u32 child[M];
   int size = 0;
   bool is_leaf = false;
@@ -357,7 +515,7 @@ class TrSys {
   // BPlusTree<Train, 79> train_data; // 4096 * 24
   Base<Train> train_data;
   BPlusTree<Station, 227> stat_data; // TODO: adjust the numbers
-  BPlusTree<EveryTr, 113> every_train;
+  Base<EveryTr> every_train;
   BPlusTree<History, 91> history;
   BPlusTree<Queue, 113> queue;
 
@@ -416,7 +574,7 @@ public:
 
   int max_seat(const EveryTr &t, int from_serial, int to_serial);
 
-  void traverse_everytr() { every_train.traverse(); }
+  // void traverse_everytr() { every_train.traverse(); }
 
   void traverse_stations() {
     for (auto it = stats.cbegin(); it != stats.cend(); ++it) {

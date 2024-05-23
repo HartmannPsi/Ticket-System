@@ -264,15 +264,20 @@ BPlusTree<Key, M>::BPlusTree(const std::string &index_file,
 
     _root.seekg(0);
     _root.read(reinterpret_cast<char *>(&root), sizeof(u32));
+    /*
+        ind_rec.seekg(std::ios::end);
+        const int ind_end = ind_rec.tellg();
+        for (int i = 0; i < ind_end; i += sizeof(u32)) {
+          ind_rec.seekg(i);
+          u32 pos;
+          ind_rec.read(reinterpret_cast<char *>(&pos), sizeof(u32));
+          ind_pool.push_front(pos);
+        }*/
 
-    ind_rec.seekg(std::ios::end);
-    const int ind_end = ind_rec.tellg();
-    for (int i = 0; i < ind_end; i += sizeof(u32)) {
-      ind_rec.seekg(i);
-      u32 pos;
-      ind_rec.read(reinterpret_cast<char *>(&pos), sizeof(u32));
-      ind_pool.push_front(pos);
-    }
+    ind_rec.seekg(0);
+    u32 end;
+    ind_rec.read(reinterpret_cast<char *>(&end), sizeof(u32));
+    ind_pool.push_front(end);
 
     ind_rec.close();
     _root.close();
@@ -293,11 +298,14 @@ template <typename Key, const int M> BPlusTree<Key, M>::~BPlusTree() {
   _root.write(reinterpret_cast<const char *>(&root), sizeof(u32));
 
   // save the recycle pools
-  u32 i = 0;
-  for (; !ind_pool.empty(); ind_pool.pop_front()) {
-    const u32 &tmp = ind_pool.top();
-    ind_rec.seekp(i);
-    ind_rec.write(reinterpret_cast<const char *>(&tmp), sizeof(u32));
+  // u32 i = 0;
+  for (; !ind_pool.empty();) {
+    const u32 tmp = ind_pool.top();
+    ind_pool.pop_front();
+    if (ind_pool.empty()) {
+      ind_rec.seekp(0);
+      ind_rec.write(reinterpret_cast<const char *>(&tmp), sizeof(u32));
+    }
     // i += sizeof(u32);
   }
 

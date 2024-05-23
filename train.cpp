@@ -46,8 +46,8 @@ History::History(const Queue &other) {
 TrSys::TrSys()
     : train_data("train.ind", "train.rec", "train.r", "train.dat"),
       stat_data("station.dat", "station.rec", "station.r"),
-      every_train("every_train.dat", "every_train.rec", "every_train.r",
-                  4096 * 12, 128),
+      every_train("every_train.ind", "every_train.rec", "every_train.r",
+                  "every_train.dat"),
       history("history.dat", "history.rec", "history.r"),
       queue("queue.dat", "queue.rec", "queue.r") {
 

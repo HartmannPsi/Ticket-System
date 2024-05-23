@@ -47,7 +47,13 @@ public:
   }
 
   bool insert(const Val &val) {
-    if (index.insert({val.id, end})) {
+    Index ind({val.id, end});
+
+    if (index.at(ind)) {
+      return false;
+    }
+
+    if (index.insert(ind)) {
       write(val, end);
       end += sizeof(Val);
       return true;
