@@ -1,9 +1,7 @@
 #include "train.hpp"
 #include "account.hpp"
 #include "time.hpp"
-//#include <algorithm>
 #include <string>
-//#include <algorithm>
 
 extern AcSys accounts;
 extern int TIME;
@@ -508,12 +506,12 @@ int TrSys::get_rank(const Train &t, int stat_serial) {
 
 int TrSys::total_time(
     const Train &t,
-    int stat_serial) { // time from start station to station required
-  if (stat_serial == 0) {
+    int stat_rank) { // time from start station to station required
+  if (stat_rank == 0) {
     return 0;
   }
   int res = t.travel_t[0];
-  for (int i = 1; i != stat_serial; ++i) {
+  for (int i = 1; i != stat_rank; ++i) {
     res += t.travel_t[i];
     res += t.stop_t[i - 1];
   }
@@ -523,9 +521,9 @@ int TrSys::total_time(
 
 int TrSys::total_cost(
     const Train &t,
-    int stat_serial) { // cost from start station to station required
+    int stat_rank) { // cost from start station to station required
   int res = 0;
-  for (int i = 0; i != stat_serial; ++i) {
+  for (int i = 0; i != stat_rank; ++i) {
     res += t.prices[i];
   }
   return res;
@@ -666,15 +664,17 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
     strcpy(from_trains[i].id, from_ids[i].c_str());
     train_data.at(from_trains[i]);
     rank_from[i] = get_rank(from_trains[i], _from);
-    time_from[i] = total_time(from_trains[i], _from);
-    cost_from[i] = total_cost(from_trains[i], _from);
+    time_from[i] =
+        total_time(from_trains[i], rank_from[i]) +
+        (rank_from[i] == 0 ? 0 : from_trains[i].stop_t[rank_from[i] - 1]);
+    cost_from[i] = total_cost(from_trains[i], rank_from[i]);
   }
   for (int j = 0; j != to_ids.size(); ++j) {
     strcpy(to_trains[j].id, to_ids[j].c_str());
     train_data.at(to_trains[j]);
     rank_to[j] = get_rank(to_trains[j], _to);
-    time_to[j] = total_time(to_trains[j], _to);
-    cost_to[j] = total_cost(to_trains[j], _to);
+    time_to[j] = total_time(to_trains[j], rank_to[j]);
+    cost_to[j] = total_cost(to_trains[j], rank_to[j]);
   }
 
   for (int i = 0; i != from_ids.size(); ++i) {
@@ -697,7 +697,7 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
         from_time -= DAY;
         from_day -= DAY;
       }
-      int to_day = from_day;
+      int to_day = to_train.start_sale;
       EveryTr from_tr, to_tr;
       strcpy(from_tr.id, from_ids[i].c_str());
       from_tr.day = from_day;
@@ -717,10 +717,21 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
         leave_trans_time += DAY;
         to_day += DAY;
       }
+      /*
       while (leave_trans_time - DAY >= arrive_trans_time) {
         leave_trans_time -= DAY;
         to_day -= DAY;
-      }
+      }*/
+
+      // if (TIME == 29538 && from_ids[i] == "INSCRIPTIONS" &&
+      //     to_ids[j] == "LEAVESOFGRASS") {
+      //   std::cout << query_train("INSCRIPTIONS", from_day);
+      //   std::cout << query_train("LEAVESOFGRASS", to_day);
+      // }
+
+      // if (to_day > to_train.end_sale) {
+      //   continue;
+      // }
 
       strcpy(to_tr.id, to_ids[j].c_str());
       to_tr.day = to_day;
@@ -759,10 +770,10 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
                              total_time(*(ans.from_train), ans.rank1);
     res += trans + ' ';
     res += Time(arrive_time1).display() + ' ';
-    res += std::to_string(max_seat(ans.from_tr, rank_from[ans.i], ans.rank1)) +
-           ' ';
     res += std::to_string(total_cost(*(ans.from_train), ans.rank1) -
                           cost_from[ans.i]) +
+           ' ';
+    res += std::to_string(max_seat(ans.from_tr, rank_from[ans.i], ans.rank1)) +
            '\n';
 
     res += std::string(ans.to_tr.id) + ' ';
@@ -776,10 +787,11 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
         ans.to_tr.day + ans.to_train->start_t + time_to[ans.j];
     res += to + ' ';
     res += Time(arrive_time2).display() + ' ';
-    res += std::to_string(max_seat(ans.to_tr, ans.rank2, rank_to[ans.j])) + ' ';
     res += std::to_string(cost_to[ans.j] -
                           total_cost(*(ans.to_train), ans.rank2)) +
-           '\n';
+           ' ';
+    res +=
+        std::to_string(max_seat(ans.to_tr, ans.rank2, rank_to[ans.j])) + '\n';
   }
 
   delete[] from_trains;
