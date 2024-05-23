@@ -1161,39 +1161,27 @@ struct Index {
 
   bool operator!=(const Index &other) const {
     const auto &res = strcmp(str, other.str);
-    return res != 0 || pos != other.pos;
+    return res != 0;
   }
 
   bool operator>(const Index &other) const {
     const auto &res = strcmp(str, other.str);
-    if (res != 0)
-      return res > 0;
-    else
-      return pos > other.pos;
+    return res > 0;
   }
 
   bool operator<(const Index &other) const {
     const auto &res = strcmp(str, other.str);
-    if (res != 0)
-      return res < 0;
-    else
-      return pos < other.pos;
+    return res < 0;
   }
 
   bool operator>=(const Index &other) const {
     const auto &res = strcmp(str, other.str);
-    if (res != 0)
-      return res > 0;
-    else
-      return pos >= other.pos;
+    return res >= 0;
   }
 
   bool operator<=(const Index &other) const {
     const auto &res = strcmp(str, other.str);
-    if (res != 0)
-      return res < 0;
-    else
-      return pos <= other.pos;
+    return res <= 0;
   }
 
   friend std::istream &operator>>(std::istream &is, Index &obj) {

@@ -7,6 +7,8 @@
 #include <fstream>
 #include <string>
 
+extern int TIME;
+
 template <typename Val, const int M = 203> class Base {
   BPlusTree<Index, M> index;
   std::fstream data;
@@ -62,7 +64,15 @@ public:
     }
   }
 
-  bool erase(const Val &val) { return index.erase({val.id, 0}); }
+  bool erase(const Val &val) {
+    Index ind(val.id, 0);
+
+    // if (TIME == 199054) {
+    //   std::cout << ind.str << ' ' << ind.pos << '\n';
+    // }
+
+    return index.erase(ind);
+  }
 
   bool modify(const Val &val) {
     Index ind(val.id, 0);

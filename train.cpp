@@ -126,10 +126,16 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
   // }
 
   Train new_t;
+  // if (TIME == 293809) {
+  //   std::cout << query_train(id, Time(6, 30, 0, 0).stamp());
+  // }
 
   strcpy(new_t.id, id.c_str());
 
   if (train_data.at(new_t)) {
+    // if (TIME == 293809) {
+    //   std::cout << "Tag 1\n";
+    // }
     throw "列车已存在";
     return false;
   }
@@ -178,6 +184,9 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
     return true;
   } else {
     throw "列车已存在";
+    // if (TIME == 293809) {
+    //   std::cout << "Tag 2\n";
+    // }
     return false;
   }
 }
@@ -191,7 +200,16 @@ bool TrSys::delete_train(const std::string &id) {
       throw "列车已发布";
       return false;
     } else {
-      train_data.erase(tmp);
+      bool res = train_data.erase(tmp);
+      /*
+      if (TIME == 199054) {
+        std::cout << (res ? "YES\n" : "NO\n");
+        if (train_data.at(tmp)) {
+          std::cout << "WTF?\n";
+        } else {
+          std::cout << "That's another question.\n";
+        }
+      }*/
       return true;
     }
   } else {
@@ -857,6 +875,10 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
     return -1;
   }
 
+  // if (TIME == 750566) {
+  //   std::cout << query_train(id, day);
+  // }
+
   Train train;
   strcpy(train.id, id.c_str());
 
@@ -865,6 +887,9 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
   // }
 
   if (train_data.at(train) && train.released) {
+    if (n > train.seat_num) {
+      return -1;
+    }
     Stat_serial tmp_from(from), tmp_to(to);
     if ((!serials.at(tmp_from)) || (!serials.at(tmp_to))) {
       return -1;
