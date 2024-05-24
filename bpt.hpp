@@ -162,7 +162,7 @@ template <typename Key, const int M> class BPlusTree {
 
 public:
   BPlusTree(const std::string &index_file, const std::string &index_recycle,
-            const std::string &r, u32 _BLOCK = 4096 * 2, int _CACHE = 128);
+            const std::string &r, u32 _BLOCK = 4096, int _CACHE = 256);
 
   ~BPlusTree();
 

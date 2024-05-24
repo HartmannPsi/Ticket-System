@@ -327,7 +327,7 @@ std::string TrSys::query_train(const std::string &id,
 }
 
 template <>
-vector<std::string> BPlusTree<Station, 227>::find_trains(const Station &ind) {
+vector<std::string> BPlusTree<Station, 113>::find_trains(const Station &ind) {
   Node node;
   read_node(node, root);
   vector<std::string> _res;
@@ -994,7 +994,7 @@ int TrSys::buy_ticket(const std::string &usr, const std::string &id, int day,
 }
 
 template <>
-vector<History> BPlusTree<History, 91>::query_order(const History &ind) {
+vector<History> BPlusTree<History, 45>::query_order(const History &ind) {
   Node node;
   read_node(node, root);
   vector<History> _res;

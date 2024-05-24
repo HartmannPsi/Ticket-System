@@ -81,7 +81,7 @@ struct Account { // M = 73
 //                                 "accounts.root");
 
 class AcSys {
-  BPlusTree<Account, 73> data;     // it should be 73
+  BPlusTree<Account, 35> data;     // it should be 73
   map<std::string, int> log_table; // string: username, int: privilege
 
 public:

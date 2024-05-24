@@ -486,7 +486,7 @@ struct Queue {
 };
 
 template <> class Base<EveryTr> { // M = 169
-  BPlusTree<EveryTrIndex, 169> index;
+  BPlusTree<EveryTrIndex, 85> index;
   std::fstream data;
   const std::string file_name;
   u32 end;
@@ -583,10 +583,10 @@ public:
   }
 };
 
-constexpr int M = 185; // M should be odd (101)
+constexpr int M = 35; // M should be odd (101)
 
 struct Node {
-  Stat_serial index[M];
+  Account index[M];
   u32 child[M];
   int size = 0;
   bool is_leaf = false;
@@ -601,12 +601,12 @@ constexpr u32 BSIZE = sizeof(Node);
 class TrSys {
   // BPlusTree<Train, 79> train_data; // 4096 * 24
   Base<Train> train_data;
-  BPlusTree<Station, 227> stat_data; // TODO: adjust the numbers
+  BPlusTree<Station, 113> stat_data; // TODO: adjust the numbers
   Base<EveryTr> every_train;
-  BPlusTree<History, 91> history;
-  BPlusTree<Queue, 113> queue;
+  BPlusTree<History, 45> history;
+  BPlusTree<Queue, 55> queue;
 
-  BPlusTree<Stat_serial, 185> serials;
+  BPlusTree<Stat_serial, 91> serials;
   StatMemoryRiver stats;
   int max_serial = 0;
   std::fstream stat_file;

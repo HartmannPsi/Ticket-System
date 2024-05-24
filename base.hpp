@@ -9,7 +9,7 @@
 
 extern int TIME;
 
-template <typename Val, const int M = 203> class Base {
+template <typename Val, const int M = 101> class Base {
   BPlusTree<Index, M> index;
   std::fstream data;
   const std::string file_name;
