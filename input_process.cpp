@@ -1,6 +1,8 @@
 #pragma GCC optimize(3)
 #include "input_process.hpp"
 
+//#define TEST
+
 extern AcSys accounts;
 extern TrSys trains;
 extern int TIME;
@@ -447,6 +449,11 @@ void process(const std::string &input) {
 
   } else if (cmd == "query_transfer") {
 
+#ifdef TEST
+    std::cout << '\n';
+    return;
+#endif
+
     std::string from = "", to = "";
     Time day(0);
     bool _tp = true;
@@ -487,6 +494,11 @@ void process(const std::string &input) {
     std::cout << trains.query_transfer(from, to, int(day), _tp);
 
   } else if (cmd == "buy_ticket") {
+
+#ifdef TEST
+    std::cout << '\n';
+    return;
+#endif
 
     std::string usr = "", id = "", from = "", to = "";
     Time day(0);
@@ -549,6 +561,11 @@ void process(const std::string &input) {
 
   } else if (cmd == "query_order") {
 
+#ifdef TEST
+    std::cout << '\n';
+    return;
+#endif
+
     std::string usr = "";
     slice();
     usr = slice();
@@ -562,6 +579,11 @@ void process(const std::string &input) {
     }
 
   } else if (cmd == "refund_ticket") {
+
+#ifdef TEST
+    std::cout << '\n';
+    return;
+#endif
 
     std::string usr = "";
     int n = 1;

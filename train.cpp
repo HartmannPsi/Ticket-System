@@ -368,6 +368,23 @@ vector<std::string> BPlusTree<Station, 113>::find_trains(const Station &ind) {
   return _res;
 }
 
+vector<std::string> TrSys::get_intersection(const vector<std::string> &v1,
+                                            const vector<std::string> &v2) {
+  map<std::string, bool> pool;
+  vector<std::string> res;
+  for (int i = 0; i != v1.size(); ++i) {
+    pool.insert({v1[i], false});
+  }
+
+  for (int i = 0; i != v2.size(); ++i) {
+    if (pool.find(v2[i]) != pool.end()) {
+      res.push_back(v2[i]);
+    }
+  }
+
+  return res;
+}
+
 std::string TrSys::query_ticket(const std::string &from, const std::string &to,
                                 int day,
                                 bool tp) { // tp: true for time, false for cost
@@ -386,7 +403,10 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
 
   Station tmp_stat;
   tmp_stat.name = _from;
-  auto train_ids = stat_data.find_trains(tmp_stat);
+  auto from_train_ids = stat_data.find_trains(tmp_stat);
+  tmp_stat.name = _to;
+  auto to_train_ids = stat_data.find_trains(tmp_stat);
+  auto train_ids = get_intersection(from_train_ids, to_train_ids);
   // if (TIME == 2864227) {
   //   for (auto it = train_ids.begin(); it != train_ids.end(); ++it) {
   //     std::cout << *it << '\n';
