@@ -30,7 +30,7 @@ int main() {
     } catch (const char *const str) {
       std::cout << "[Error] " << str;
     } catch (...) {
-      std::cout << "[Error] Unkown Exception.\n";
+      std::cout << "[Error] Unknown Exception.\n";
     }
 #endif
 #ifndef DEBUG
