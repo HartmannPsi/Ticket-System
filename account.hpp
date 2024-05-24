@@ -2,6 +2,7 @@
 #ifndef ACCOUNT_HPP
 #define ACCOUNT_HPP
 
+#include "base.hpp"
 #include "bpt.hpp"
 #include <iostream>
 
