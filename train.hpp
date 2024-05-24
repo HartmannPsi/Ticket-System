@@ -505,7 +505,7 @@ template <> class Base<EveryTr> { // M = 169
 public:
   Base(const std::string &index_file, const std::string &r,
        const std::string &data_file)
-      : index(index_file, r, 1450), file_name(data_file) {
+      : index(index_file, r, 1145), file_name(data_file) {
     data.open(data_file);
 
     if (!data.is_open()) {
