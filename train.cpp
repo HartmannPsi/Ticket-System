@@ -45,13 +45,11 @@ History::History(const Queue &other) {
 }
 
 TrSys::TrSys()
-    : train_data("train.ind", "train.rec", "train.r", "train.dat"),
-      stat_data("station.dat", "station.rec", "station.r"),
-      every_train("every_train.ind", "every_train.rec", "every_train.r",
-                  "every_train.dat"),
-      history("history.dat", "history.rec", "history.r"),
-      queue("queue.dat", "queue.rec", "queue.r"),
-      serials("serials.dat", "serials.rec", "serials.r") {
+    : train_data("train.ind", "train.r", "train.dat"),
+      stat_data("station.dat", "station.r"),
+      every_train("every_train.ind", "every_train.r", "every_train.dat"),
+      history("history.dat", "history.r"), queue("queue.dat", "queue.r"),
+      serials("serials.dat", "serials.r") {
 
   stat_file.open("station_serials.dat");
 

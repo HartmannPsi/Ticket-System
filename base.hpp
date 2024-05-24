@@ -26,9 +26,9 @@ template <typename Val, const int M = 101> class Base {
   }
 
 public:
-  Base(const std::string &index_file, const std::string &index_recycle,
-       const std::string &r, const std::string &data_file)
-      : index(index_file, index_recycle, r), file_name(data_file) {
+  Base(const std::string &index_file, const std::string &r,
+       const std::string &data_file)
+      : index(index_file, r), file_name(data_file) {
     data.open(data_file);
 
     if (!data.is_open()) {

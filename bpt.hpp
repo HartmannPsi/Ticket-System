@@ -46,8 +46,8 @@ template <typename Key, const int M> class BPlusTree {
     }
   };
 
-  std::fstream ind_file, ind_rec, _root;
-  const std::string ind, _ind_rec, _r;
+  std::fstream ind_file, _root;
+  const std::string ind, _r;
   List<u32> ind_pool;
   u32 root;
   // const int M; // M should be odd (101)
@@ -161,8 +161,8 @@ template <typename Key, const int M> class BPlusTree {
   } cache;
 
 public:
-  BPlusTree(const std::string &index_file, const std::string &index_recycle,
-            const std::string &r, u32 _BLOCK = 4096, int _CACHE = 256);
+  BPlusTree(const std::string &index_file, const std::string &r,
+            u32 _BLOCK = 4096, int _CACHE = 256);
 
   ~BPlusTree();
 
@@ -208,18 +208,18 @@ int upper_bound(const Key *const beg, int size, const Key &index);
 template <typename Key, const int M> void BPlusTree<Key, M>::clear() {
   cache.clear();
   ind_file.close();
-  ind_rec.close();
-  _root.close();
+  // ind_rec.close();
+  //_root.close();
 
-  std::remove(ind.c_str());
-  std::remove(_ind_rec.c_str());
-  std::remove(_r.c_str());
+  // std::remove(ind.c_str());
+  //  std::remove(_ind_rec.c_str());
+  //   std::remove(_r.c_str());
 
   ind_file.open(ind, std::ios::out);
   ind_file.close();
   ind_file.open(ind, std::ios::in | std::ios::out);
-  ind_rec.open(_ind_rec, std::ios::out);
-  _root.open(_r, std::ios::out);
+  // ind_rec.open(_ind_rec, std::ios::out);
+  //_root.open(_r, std::ios::out);
 
   ind_pool.push_front(0 + BLOCK);
   root = 0;
@@ -234,11 +234,8 @@ template <typename Key, const int M> void BPlusTree<Key, M>::clear() {
 template <typename Key, const int M>
 BPlusTree<Key, M>::BPlusTree(const std::string &index_file,
 
-                             const std::string &index_recycle,
-
                              const std::string &r, u32 _BLOCK, int _CACHE)
-    : cache(this), ind(index_file), _ind_rec(index_recycle), _r(r),
-      BLOCK(_BLOCK), CACHE_SIZE(_CACHE) {
+    : cache(this), ind(index_file), _r(r), BLOCK(_BLOCK), CACHE_SIZE(_CACHE) {
 
   ind_file.open(index_file, std::ios::in | std::ios::out);
   if (!ind_file.is_open()) { // 1st time to open
@@ -246,8 +243,8 @@ BPlusTree<Key, M>::BPlusTree(const std::string &index_file,
     ind_file.close();
     ind_file.open(index_file, std::ios::in | std::ios::out);
 
-    ind_rec.open(index_recycle, std::ios::out);
-    _root.open(r, std::ios::out);
+    // ind_rec.open(index_recycle, std::ios::out);
+    //_root.open(r, std::ios::out);
 
     ind_pool.push_front(0 + BLOCK);
     root = 0;
@@ -259,7 +256,7 @@ BPlusTree<Key, M>::BPlusTree(const std::string &index_file,
     ind_file.write(reinterpret_cast<const char *>(&node), sizeof(Node));
 
   } else { // restore the recycle pool
-    ind_rec.open(index_recycle, std::ios::in);
+    // ind_rec.open(index_recycle, std::ios::in);
     _root.open(r, std::ios::in);
 
     _root.seekg(0);
@@ -274,15 +271,15 @@ BPlusTree<Key, M>::BPlusTree(const std::string &index_file,
           ind_pool.push_front(pos);
         }*/
 
-    ind_rec.seekg(0);
+    _root.seekg(sizeof(u32));
     u32 end;
-    ind_rec.read(reinterpret_cast<char *>(&end), sizeof(u32));
+    _root.read(reinterpret_cast<char *>(&end), sizeof(u32));
     ind_pool.push_front(end);
 
-    ind_rec.close();
+    // ind_rec.close();
     _root.close();
-    ind_rec.open(index_recycle, std::ios::out);
-    _root.open(r, std::ios::out);
+    // ind_rec.open(index_recycle, std::ios::out);
+    //_root.open(r, std::ios::out);
   }
 
   cache.add(root);
@@ -293,6 +290,7 @@ template <typename Key, const int M> BPlusTree<Key, M>::~BPlusTree() {
   // restore cache to file
   cache.clear();
 
+  _root.open(_r, std::ios::out);
   // save the pos of root
   _root.seekp(0);
   _root.write(reinterpret_cast<const char *>(&root), sizeof(u32));
@@ -303,14 +301,15 @@ template <typename Key, const int M> BPlusTree<Key, M>::~BPlusTree() {
     const u32 tmp = ind_pool.top();
     ind_pool.pop_front();
     if (ind_pool.empty()) {
-      ind_rec.seekp(0);
-      ind_rec.write(reinterpret_cast<const char *>(&tmp), sizeof(u32));
+      _root.seekp(sizeof(u32));
+      _root.write(reinterpret_cast<const char *>(&tmp), sizeof(u32));
+      break;
     }
     // i += sizeof(u32);
   }
 
   ind_file.close();
-  ind_rec.close();
+  // ind_rec.close();
   _root.close();
 }
 
