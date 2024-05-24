@@ -1,3 +1,4 @@
+#pragma GCC optimize(3)
 #include "account.hpp"
 
 AcSys::AcSys() : data("account.dat", "account.rec", "account.r", 4096 * 2) {}

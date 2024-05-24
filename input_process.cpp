@@ -1,3 +1,4 @@
+#pragma GCC optimize(3)
 #include "input_process.hpp"
 
 extern AcSys accounts;

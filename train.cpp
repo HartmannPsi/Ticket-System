@@ -1,3 +1,4 @@
+#pragma GCC optimize(3)
 #include "train.hpp"
 #include "account.hpp"
 #include "time.hpp"

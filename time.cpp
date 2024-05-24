@@ -1,3 +1,4 @@
+#pragma GCC optimize(3)
 #include "time.hpp"
 #include <string>
 
