@@ -253,13 +253,7 @@ void process(const std::string &input) {
     while (get_info())
       ;
 
-    const auto res = accounts.modify(usr, psw, name, mail, cur_usr, priv);
-
-    if (res == "") {
-      std::cout << "-1\n";
-    } else {
-      std::cout << res << '\n'; // Hartmann_Psi
-    }
+    accounts.modify(usr, psw, name, mail, cur_usr, priv);
 
   } else if (cmd == "add_train") {
 

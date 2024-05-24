@@ -95,6 +95,7 @@ std::string AcSys::modify(const std::string &usr, const std::string &psw,
                           const std::string &cur_usr, int priv) {
   const int cur_priv = usrpriv(cur_usr);
   if (cur_priv == -1) {
+    std::cout << "-1\n";
     // throw "用户未登录\n";
     return "";
   }
@@ -120,9 +121,13 @@ std::string AcSys::modify(const std::string &usr, const std::string &psw,
       }
 
       const bool flag = data.modify(acc);
+      /*
       std::string res = std::string(acc.username) + " " +
                         std::string(acc.name) + " " + std::string(acc.mail) +
                         " " + std::to_string(acc.privilege);
+      */
+      std::cout << acc.username << ' ' << acc.name << ' ' << acc.mail << ' '
+                << acc.privilege << '\n';
       /*
       if (flag) {
         std::cout << "修改成功 ";
@@ -130,13 +135,15 @@ std::string AcSys::modify(const std::string &usr, const std::string &psw,
         std::cout << "修改失败 ";
       }
       */
-      return res;
+      return "";
 
     } else {
       // throw "权限不足\n";
+      std::cout << "-1\n";
       return "";
     }
   } else {
+    std::cout << "-1\n";
     // throw "查找不到目标用户\n";
     return "";
   }
