@@ -28,7 +28,7 @@ template <typename Val, const int M = 101> class Base {
 public:
   Base(const std::string &index_file, const std::string &r,
        const std::string &data_file)
-      : index(index_file, r, 1536), file_name(data_file) {
+      : index(index_file, r, 1450), file_name(data_file) {
     data.open(data_file);
 
     if (!data.is_open()) {

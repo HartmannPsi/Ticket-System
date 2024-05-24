@@ -1,7 +1,7 @@
 #pragma GCC optimize(3)
 #include "account.hpp"
 
-AcSys::AcSys() : data("account.dat", "account.r", 1536) {}
+AcSys::AcSys() : data("account.dat", "account.r", 1450) {}
 
 AcSys::~AcSys() = default;
 
