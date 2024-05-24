@@ -10,6 +10,8 @@
 #include <iostream>
 #include <string>
 
+extern int TIME;
+
 using u32 = unsigned long;
 
 template <typename Key, const int M> class BPlusTree {
@@ -44,6 +46,15 @@ template <typename Key, const int M> class BPlusTree {
 
       return *this;
     }
+    /*
+        friend std::ostream &operator<<(std::ostream &os, const Node &obj) {
+          os << "Size: " << obj.size << '\n';
+          for (int i = 0; i != obj.size; ++i) {
+            os << obj.index[i] << '\n';
+          }
+
+          return os;
+        }*/
   };
 
   std::fstream ind_file, _root;
@@ -103,11 +114,14 @@ template <typename Key, const int M> class BPlusTree {
     }
 
     Node *find(u32 pos) {
+
       auto res = table.find(pos);
 
       if (res == table.end()) {
+
         return add(pos);
       } else {
+
         list.update_to_front(res->second);
         return &(res->second->val.first);
       }
@@ -188,7 +202,7 @@ public:
     return node.size == 0;
   }
 
-  vector<std::string> find_trains(const Key &ind) {
+  vector<u32> find_trains(const Key &ind) {
     throw "This member is not designed to be used in the instantiation.\n";
   }
 
@@ -315,7 +329,9 @@ template <typename Key, const int M> BPlusTree<Key, M>::~BPlusTree() {
 
 template <typename Key, const int M>
 void BPlusTree<Key, M>::read_node(Node &dest, u32 pos) {
+
   auto read = cache.find(pos);
+
   dest = *read;
 }
 
@@ -349,17 +365,29 @@ bool BPlusTree<Key, M>::insert(const Key &ind) {
   int i = 0;
   read_node(node[0], root);
 
+  if (TIME == 553262 && M == 339) {
+    std::cout << "Tag A" << std::endl;
+  }
+
   while (!node[i].is_leaf) {
     ++i;
+
     if (ind > node[i - 1].index[node[i - 1].size - 1]) {
+
       pos[i] = node[i - 1].child[node[i - 1].size];
+
       child[i] = node[i - 1].size;
+
       read_node(node[i], node[i - 1].child[node[i - 1].size]);
 
     } else { // child[i]:  (index[i - 1], index[i]]
+
       int _pos = lower_bound(node[i - 1].index, node[i - 1].size, ind);
+
       pos[i] = node[i - 1].child[_pos];
+
       child[i] = _pos;
+
       read_node(node[i], node[i - 1].child[_pos]);
     }
   }
@@ -373,6 +401,7 @@ bool BPlusTree<Key, M>::insert(const Key &ind) {
     node[i].index[0] = ind;
     ++node[i].size;
     write_node(node[i], pos[i]);
+
     return true;
   } else if (node[i].size < M - 1) { // trivial
     if (node[i].index[node[i].size - 1] <= ind) {
@@ -386,7 +415,9 @@ bool BPlusTree<Key, M>::insert(const Key &ind) {
       node[i].index[_pos] = ind;
       ++node[i].size;
     }
+
     write_node(node[i], pos[i]);
+
     return true;
   }
   // split leaves

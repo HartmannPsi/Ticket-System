@@ -64,6 +64,17 @@ public:
     }
   }
 
+  u32 get_pos(const Val &val) {
+    Index ind(val.id, INT32_MAX);
+    index.at(ind);
+    return ind.pos;
+  }
+
+  bool at(Val &val, u32 pos) {
+    read(val, pos);
+    return true;
+  }
+
   bool erase(const Val &val) {
     Index ind(val.id, 0);
 

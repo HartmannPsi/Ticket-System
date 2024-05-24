@@ -335,14 +335,22 @@ void process(const std::string &input) {
                          int(start_t), _travel_t, _stop_t, int(start_sale),
                          int(end_sale), type)) {
       std::cout << "0\n";
+      delete[] _prices;
+      delete[] _travel_t;
+      delete[] _stop_t;
+      delete[] _stations;
     } else {
+      delete[] _prices;
+      delete[] _travel_t;
+      delete[] _stop_t;
+      delete[] _stations;
       throw "-1: Failed to add train.\n";
     }
 
-    delete[] _prices;
-    delete[] _travel_t;
-    delete[] _stop_t;
-    delete[] _stations;
+    // delete[] _prices;
+    // delete[] _travel_t;
+    // delete[] _stop_t;
+    // delete[] _stations;
 
   } else if (cmd == "delete_train") {
 

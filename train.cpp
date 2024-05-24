@@ -135,7 +135,7 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
     // if (TIME == 293809) {
     //   std::cout << "Tag 1\n";
     // }
-    throw "列车已存在";
+    // throw "列车已存在";
     return false;
   }
 
@@ -182,10 +182,10 @@ bool TrSys::add_train(const std::string &id, int stat_num, int seat_num,
   if (train_data.insert(new_t)) {
     return true;
   } else {
-    throw "列车已存在";
-    // if (TIME == 293809) {
-    //   std::cout << "Tag 2\n";
-    // }
+    // throw "列车已存在";
+    //  if (TIME == 293809) {
+    //    std::cout << "Tag 2\n";
+    //  }
     return false;
   }
 }
@@ -221,19 +221,63 @@ bool TrSys::release_train(const std::string &id) {
   Train tmp;
   strcpy(tmp.id, id.c_str());
 
+  // if (TIME == 553262) {
+  //   std::cout << "Tag 1" << std::endl;
+  // }
+
   if (train_data.at(tmp)) {
+    // if (TIME == 553262) {
+    //   std::cout << "Tag 2" << std::endl;
+    // }
+
     if (tmp.released) {
+      // if (TIME == 553262) {
+      //   std::cout << "Tag 3" << std::endl;
+      // }
+
       throw "列车已发布";
       return false;
     } else {
+      // if (TIME == 553262) {
+      //   std::cout << "Tag 4" << std::endl;
+      // }
+
       tmp.released = true;
       train_data.modify(tmp);
+      // if (TIME == 553262) {
+      //   std::cout << "Tag 5" << std::endl;
+      // }
+
+      const u32 pos = train_data.get_pos(tmp);
+      // if (TIME == 553262) {
+      //   std::cout << "Tag 6" << std::endl;
+      // }
+
       for (int i = 0; i != tmp.stat_num; ++i) {
         Station stat;
+        // if (TIME == 553262) {
+        //   std::cout << "Tag 10" << std::endl;
+        // }
+
         stat.name = tmp.stations[i];
-        strcpy(stat.train_id, tmp.id);
+        // if (TIME == 553262) {
+        //   std::cout << "Tag 11" << std::endl;
+        // }
+
+        stat.train_pos = pos;
+        // if (TIME == 553262) {
+        //   std::cout << "Tag 12" << std::endl;
+        //   std::cout << stat << std::endl;
+        // }
+
         stat_data.insert(stat);
+        // if (TIME == 553262) {
+        //   std::cout << "Tag 13" << std::endl;
+        // }
       }
+      // if (TIME == 553262) {
+      //   std::cout << "Tag 7" << std::endl;
+      // }
 
       for (int day = tmp.start_sale; day <= tmp.end_sale; day += DAY) {
         EveryTr train;
@@ -244,10 +288,17 @@ bool TrSys::release_train(const std::string &id) {
         }
         every_train.insert(train);
       }
+      // if (TIME == 553262) {
+      //   std::cout << "Tag 8" << std::endl;
+      // }
 
       return true;
     }
   } else {
+    // if (TIME == 553262) {
+    //  std::cout << "Tag 9" << std::endl;
+    //}
+
     throw "列车不存在";
     return false;
   }
@@ -325,10 +376,10 @@ std::string TrSys::query_train(const std::string &id,
 }
 
 template <>
-vector<std::string> BPlusTree<Station, 113>::find_trains(const Station &ind) {
+vector<u32> BPlusTree<Station, 169>::find_trains(const Station &ind) {
   Node node;
   read_node(node, root);
-  vector<std::string> _res;
+  vector<u32> _res;
 
   if (node.is_leaf && node.size == 0) {
     // std::cout << "null\n";
@@ -350,7 +401,7 @@ vector<std::string> BPlusTree<Station, 113>::find_trains(const Station &ind) {
     int i = 0;
     for (; i != node.size; ++i) {
       if (ind.name == node.index[i].name) {
-        _res.push_back(std::string(node.index[i].train_id));
+        _res.push_back(node.index[i].train_pos);
       } else if (ind.name < node.index[i].name) {
         break;
       }
@@ -368,10 +419,10 @@ vector<std::string> BPlusTree<Station, 113>::find_trains(const Station &ind) {
   return _res;
 }
 
-vector<int> TrSys::get_intersection(const vector<std::string> &v1,
-                                    const vector<std::string> &v2) {
+vector<u32> TrSys::get_intersection(const vector<u32> &v1,
+                                    const vector<u32> &v2) {
 
-  vector<int> res;
+  vector<u32> res;
   if (v1.empty() || v2.empty()) {
     return res;
   }
@@ -384,7 +435,7 @@ vector<int> TrSys::get_intersection(const vector<std::string> &v1,
       break;
     }
     if (v1[i] == v2[j]) {
-      res.push_back(i);
+      res.push_back(v1[i]);
       ++i;
       if (i == v1.size()) {
         break;
@@ -397,7 +448,7 @@ vector<int> TrSys::get_intersection(const vector<std::string> &v1,
       break;
     }
     if (v1[i] == v2[j]) {
-      res.push_back(i);
+      res.push_back(v1[i]);
       ++j;
       if (j == v2.size()) {
         break;
@@ -425,8 +476,10 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
   const auto _from = tmp_from.serial, _to = tmp_to.serial;
 
   Station tmp_stat;
+  tmp_stat.train_pos = 0;
   tmp_stat.name = _from;
   auto from_train_ids = stat_data.find_trains(tmp_stat);
+  tmp_stat.train_pos = 0;
   tmp_stat.name = _to;
   auto to_train_ids = stat_data.find_trains(tmp_stat);
 
@@ -435,6 +488,15 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
   // }
 
   auto train_ids = get_intersection(from_train_ids, to_train_ids);
+  /*
+    if (TIME == 81257) {
+      std::cout << "from: \n";
+      traverse(from_train_ids);
+      std::cout << "to: \n";
+      traverse(to_train_ids);
+      std::cout << "intersect: \n";
+      traverse(train_ids);
+    }*/
   // if (TIME == 2864227) {
   //   for (auto it = train_ids.begin(); it != train_ids.end(); ++it) {
   //     std::cout << *it << '\n';
@@ -468,10 +530,10 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
     // auto &id = res[i];
     Train train;
     Info tmp_info;
-    strcpy(train.id, from_train_ids[train_ids[i]].c_str());
-    train_data.at(train);
+    // strcpy(train.id, from_train_ids[train_ids[i]].c_str());
+    train_data.at(train, train_ids[i]);
     EveryTr tr;
-    strcpy(tr.id, from_train_ids[train_ids[i]].c_str());
+    strcpy(tr.id, train.id);
 
     // if (!(train.released && train.start_sale <= day && day <=
     // train.end_sale)) {
@@ -484,7 +546,7 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
       // }
       continue;
     }
-    tmp_info.id = from_train_ids[train_ids[i]];
+    tmp_info.id = std::string(train.id);
     Time time(day + train.start_t);
 
     // while (time.stamp() < day) {
@@ -766,7 +828,9 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
   // const int _from = serials[from], _to = serials[to];
   Station tmp;
   tmp.name = _from;
+  tmp.train_pos = 0;
   auto from_ids = stat_data.find_trains(tmp);
+  tmp.train_pos = 0;
   tmp.name = _to;
   auto to_ids = stat_data.find_trains(tmp);
   Train *const from_trains = new Train[from_ids.size()];
@@ -779,17 +843,19 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
   int *const cost_to = new int[to_ids.size()];
 
   for (int i = 0; i != from_ids.size(); ++i) {
-    strcpy(from_trains[i].id, from_ids[i].c_str());
-    train_data.at(from_trains[i]);
+
+    // strcpy(from_trains[i].id, from_ids[i].c_str());
+    train_data.at(from_trains[i], from_ids[i]);
     rank_from[i] = get_rank(from_trains[i], _from);
     time_from[i] =
         total_time(from_trains[i], rank_from[i]) +
         (rank_from[i] == 0 ? 0 : from_trains[i].stop_t[rank_from[i] - 1]);
     cost_from[i] = total_cost(from_trains[i], rank_from[i]);
   }
+
   for (int j = 0; j != to_ids.size(); ++j) {
-    strcpy(to_trains[j].id, to_ids[j].c_str());
-    train_data.at(to_trains[j]);
+    // strcpy(to_trains[j].id, to_ids[j].c_str());
+    train_data.at(to_trains[j], to_ids[j]);
     rank_to[j] = get_rank(to_trains[j], _to);
     time_to[j] = total_time(to_trains[j], rank_to[j]);
     cost_to[j] = total_cost(to_trains[j], rank_to[j]);
@@ -821,7 +887,7 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
         }
         int to_day = to_train.start_sale;
         EveryTr from_tr, to_tr;
-        strcpy(from_tr.id, from_ids[i].c_str());
+        strcpy(from_tr.id, from_train.id);
         from_tr.day = from_day;
         if (!every_train.at(from_tr)) {
           continue;
@@ -840,7 +906,7 @@ TrSys::query_transfer(const std::string &from, const std::string &to, int day,
           to_day += DAY;
         }
 
-        strcpy(to_tr.id, to_ids[j].c_str());
+        strcpy(to_tr.id, to_train.id);
         to_tr.day = to_day;
         if (!every_train.at(to_tr)) {
           continue;

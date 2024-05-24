@@ -155,6 +155,10 @@ struct EveryTrIndex {
     day = other.day;
   }
 
+  friend std::ostream &operator<<(std::ostream &os, const EveryTrIndex &obj) {
+    return os;
+  }
+
   bool operator==(const EveryTrIndex &other) const {
     const int res = strcmp(id, other.id);
     return res == 0 && day == other.day;
@@ -203,65 +207,73 @@ struct EveryTrIndex {
 };
 
 struct Station {
-  int name = -1;
-  char train_id[21] = {};
+  int name = 0;
+  u32 train_pos = 0;
+  /*
+    Station &operator=(const Station &other) {
+      if (&other == this) {
+        return *this;
+      }
 
-  Station &operator=(const Station &other) {
-    if (&other == this) {
+      name = other.name;
+      // strcpy(train_id, other.train_id);
+      train_pos = other.train_pos;
+
       return *this;
-    }
+    }*/
 
-    name = other.name;
-    strcpy(train_id, other.train_id);
-
-    return *this;
+  friend std::ostream &operator<<(std::ostream &os, const Station &obj) {
+    os << obj.name << ' ' << obj.train_pos;
+    return os;
   }
 
   bool operator==(const Station &other) const {
-    const int res2 = strcmp(train_id, other.train_id);
-    return name == other.name && res2 == 0;
+    // const int res2 = strcmp(train_id, other.train_id);
+    return name == other.name && train_pos == other.train_pos;
   }
 
   bool operator!=(const Station &other) const {
-    const int res2 = strcmp(train_id, other.train_id);
-    return name != other.name || res2 != 0;
+    // const int res2 = strcmp(train_pos, other.train_id);
+    return name != other.name || train_pos != other.train_pos;
   }
 
   bool operator>(const Station &other) const {
-    const int res2 = strcmp(train_id, other.train_id);
+    // const int res2 = strcmp(train_id, other.train_id);
     if (name != other.name) {
       return name > other.name;
     } else {
-      return res2 > 0;
+      return train_pos > other.train_pos;
     }
   }
 
   bool operator>=(const Station &other) const {
-    const int res2 = strcmp(train_id, other.train_id);
+    // const int res2 = strcmp(train_id, other.train_id);
     if (name != other.name) {
       return name > other.name;
     } else {
-      return res2 >= 0;
+      return train_pos >= other.train_pos;
     }
   }
 
   bool operator<(const Station &other) const {
-    const int res2 = strcmp(train_id, other.train_id);
+    // const int res2 = strcmp(train_id, other.train_id);
     if (name != other.name) {
       return name < other.name;
     } else {
-      return res2 < 0;
+      return train_pos < other.train_pos;
     }
   }
 
   bool operator<=(const Station &other) const {
-    const int res2 = strcmp(train_id, other.train_id);
+    // const int res2 = strcmp(train_id, other.train_id);
     if (name != other.name) {
       return name < other.name;
     } else {
-      return res2 <= 0;
+      return train_pos <= other.train_pos;
     }
   }
+
+  Station() {}
 };
 
 struct Info {
@@ -297,6 +309,11 @@ struct Stat_serial {
   int serial = 0;
 
   Stat_serial() {}
+
+  friend std::ostream &operator<<(std::ostream &os, const Stat_serial &obj) {
+    // os << obj.id << ' ' << Time(obj.day).display() << '\n';
+    return os;
+  }
 
   Stat_serial(const std::string &str) { strcpy(name, str.c_str()); }
 
@@ -583,10 +600,10 @@ public:
   }
 };
 
-constexpr int M = 35; // M should be odd (101)
+constexpr int M = 169; // M should be odd (101)
 
 struct Node {
-  Account index[M];
+  Station index[M];
   u32 child[M];
   int size = 0;
   bool is_leaf = false;
@@ -601,7 +618,7 @@ constexpr u32 BSIZE = sizeof(Node);
 class TrSys {
   // BPlusTree<Train, 79> train_data; // 4096 * 24
   Base<Train> train_data;
-  BPlusTree<Station, 113> stat_data; // TODO: adjust the numbers
+  BPlusTree<Station, 169> stat_data; // TODO: adjust the numbers
   Base<EveryTr> every_train;
   BPlusTree<History, 45> history;
   BPlusTree<Queue, 55> queue;
@@ -661,8 +678,7 @@ public:
 
   int max_seat(const EveryTr &t, int from_serial, int to_serial);
 
-  vector<int> get_intersection(const vector<std::string> &v1,
-                               const vector<std::string> &v2);
+  vector<u32> get_intersection(const vector<u32> &v1, const vector<u32> &v2);
 
   // void traverse_everytr() { every_train.traverse(); }
   /*
@@ -684,6 +700,14 @@ public:
       }
 
       std::cout << "max_serial: " << max_serial << '\n';
+    }*/
+  /*
+    void traverse(const vector<u32> &v) {
+      for (int i = 0; i != v.size(); ++i) {
+        Train tmp;
+        train_data.at(tmp, v[i]);
+        std::cout << tmp.id << '\n';
+      }
     }*/
 };
 
