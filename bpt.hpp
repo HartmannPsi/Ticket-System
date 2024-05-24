@@ -162,7 +162,7 @@ template <typename Key, const int M> class BPlusTree {
 
 public:
   BPlusTree(const std::string &index_file, const std::string &r,
-            u32 _BLOCK = 4096, int _CACHE = 256);
+            int _CACHE = 512, u32 _BLOCK = 4096);
 
   ~BPlusTree();
 
@@ -234,7 +234,7 @@ template <typename Key, const int M> void BPlusTree<Key, M>::clear() {
 template <typename Key, const int M>
 BPlusTree<Key, M>::BPlusTree(const std::string &index_file,
 
-                             const std::string &r, u32 _BLOCK, int _CACHE)
+                             const std::string &r, int _CACHE, u32 _BLOCK)
     : cache(this), ind(index_file), _r(r), BLOCK(_BLOCK), CACHE_SIZE(_CACHE) {
 
   ind_file.open(index_file, std::ios::in | std::ios::out);
