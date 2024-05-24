@@ -14,7 +14,7 @@ bool AcSys::adduser(const std::string &usr, const std::string &psw,
     return true;
   } else { // normal
     if (usrpriv(cur_usr) <= priv) {
-      throw "权限不足无法添加用户\n";
+      // throw "权限不足无法添加用户\n";
       return false;
     }
 
@@ -26,7 +26,7 @@ bool AcSys::adduser(const std::string &usr, const std::string &psw,
 
 bool AcSys::login(const std::string &usr, const std::string &psw) {
   if (usrpriv(usr) >= 0) {
-    throw "用户已登录\n";
+    // throw "用户已登录\n";
     return false;
   }
   Account acc(usr);
@@ -36,11 +36,11 @@ bool AcSys::login(const std::string &usr, const std::string &psw) {
       log_table.insert({usr, acc.privilege});
       return true;
     } else {
-      throw "用户名或密码错误\n";
+      // throw "用户名或密码错误\n";
       return false;
     }
   } else {
-    throw "查找不到用户\n";
+    // throw "查找不到用户\n";
     return false;
   }
 }
@@ -48,7 +48,7 @@ bool AcSys::login(const std::string &usr, const std::string &psw) {
 bool AcSys::logout(const std::string &usr) {
   auto it = log_table.find(usr);
   if (it == log_table.end()) {
-    throw "用户未登录\n";
+    // throw "用户未登录\n";
     return false;
   } else {
     log_table.erase(it);
@@ -59,7 +59,7 @@ bool AcSys::logout(const std::string &usr) {
 std::string AcSys::query(const std::string &cur_usr, const std::string &usr) {
   const int cur_priv = usrpriv(cur_usr);
   if (cur_priv == -1) {
-    throw "用户未登录\n";
+    std::cout << "-1\n";
     return "";
   }
 
@@ -70,17 +70,22 @@ std::string AcSys::query(const std::string &cur_usr, const std::string &usr) {
   Account acc(usr);
   if (data.at(acc)) {
     if (acc.privilege < cur_priv || cur_usr == usr) {
+      /*
       std::string res = std::string(acc.username) + " " +
                         std::string(acc.name) + " " + std::string(acc.mail) +
-                        " " + std::to_string(acc.privilege);
-      return res;
+                        " " + std::to_string(acc.privilege);*/
+
+      std::cout << acc.username << ' ' << acc.name << ' ' << acc.mail << ' '
+                << acc.privilege << '\n';
+
+      return "";
 
     } else {
-      throw "权限不足\n";
+      std::cout << "-1\n";
       return "";
     }
   } else {
-    throw "查找不到目标用户\n";
+    std::cout << "-1\n";
     return "";
   }
 }
@@ -90,7 +95,7 @@ std::string AcSys::modify(const std::string &usr, const std::string &psw,
                           const std::string &cur_usr, int priv) {
   const int cur_priv = usrpriv(cur_usr);
   if (cur_priv == -1) {
-    throw "用户未登录\n";
+    // throw "用户未登录\n";
     return "";
   }
 
@@ -128,11 +133,11 @@ std::string AcSys::modify(const std::string &usr, const std::string &psw,
       return res;
 
     } else {
-      throw "权限不足\n";
+      // throw "权限不足\n";
       return "";
     }
   } else {
-    throw "查找不到目标用户\n";
+    // throw "查找不到目标用户\n";
     return "";
   }
 }

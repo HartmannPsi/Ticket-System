@@ -196,7 +196,7 @@ bool TrSys::delete_train(const std::string &id) {
 
   if (train_data.at(tmp)) {
     if (tmp.released) {
-      throw "列车已发布";
+      // throw "列车已发布";
       return false;
     } else {
       bool res = train_data.erase(tmp);
@@ -212,7 +212,7 @@ bool TrSys::delete_train(const std::string &id) {
       return true;
     }
   } else {
-    throw "列车不存在";
+    // throw "列车不存在";
     return false;
   }
 }
@@ -235,7 +235,7 @@ bool TrSys::release_train(const std::string &id) {
       //   std::cout << "Tag 3" << std::endl;
       // }
 
-      throw "列车已发布";
+      // throw "列车已发布";
       return false;
     } else {
       // if (TIME == 553262) {
@@ -299,7 +299,7 @@ bool TrSys::release_train(const std::string &id) {
     //  std::cout << "Tag 9" << std::endl;
     //}
 
-    throw "列车不存在";
+    // throw "列车不存在";
     return false;
   }
 }
@@ -365,12 +365,12 @@ std::string TrSys::query_train(const std::string &id,
 
       return res;
     } else {
-      throw "不在列车运营时间范围内";
+      // throw "不在列车运营时间范围内";
       return "";
     }
 
   } else {
-    throw "列车不存在";
+    // throw "列车不存在";
     return "";
   }
 }
@@ -471,7 +471,8 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
   // }
 
   if ((!serials.at(tmp_from)) || (!serials.at(tmp_to))) {
-    return "0\n";
+    std::cout << "0\n";
+    return "";
   }
   const auto _from = tmp_from.serial, _to = tmp_to.serial;
 
@@ -625,20 +626,31 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
     // TODO: find some way to sort the answers
     sort(infos, Info::CmpByCost());
   }
+  /*
+    std::string res = "";
+    res += std::to_string(infos.size()) + '\n';
+    for (int i = 0; i != infos.size(); ++i) {
+      res += infos[i].id + ' ';
+      res += from + ' ';
+      res += infos[i].leave.display() + " -> ";
+      res += to + ' ';
+      res += infos[i].arrive.display() + ' ';
+      res += std::to_string(infos[i].price) + ' ';
+      res += std::to_string(infos[i].seat) + '\n';
+    }*/
 
-  std::string res = "";
-  res += std::to_string(infos.size()) + '\n';
+  std::cout << infos.size() << '\n';
   for (int i = 0; i != infos.size(); ++i) {
-    res += infos[i].id + ' ';
-    res += from + ' ';
-    res += infos[i].leave.display() + " -> ";
-    res += to + ' ';
-    res += infos[i].arrive.display() + ' ';
-    res += std::to_string(infos[i].price) + ' ';
-    res += std::to_string(infos[i].seat) + '\n';
+    std::cout << infos[i].id << ' ';
+    std::cout << from << ' ';
+    std::cout << infos[i].leave.display() << " -> ";
+    std::cout << to << ' ';
+    std::cout << infos[i].arrive.display() << ' ';
+    std::cout << infos[i].price << ' ';
+    std::cout << infos[i].seat << '\n';
   }
 
-  return res;
+  return "";
   // return res
 }
 
@@ -1212,7 +1224,7 @@ bool TrSys::refund_ticket(const std::string &usr, int n) {
   //}
 
   if (accounts.usrpriv(usr) == -1) {
-    throw "用户未登录\n";
+    // throw "用户未登录\n";
     return false;
   }
 
@@ -1221,11 +1233,11 @@ bool TrSys::refund_ticket(const std::string &usr, int n) {
   ind.time = INT32_MAX;
   auto v = history.query_order(ind);
   if (v.size() < n) {
-    throw "购票记录数量不足\n";
+    // throw "购票记录数量不足\n";
     return false;
   }
   if (v[n - 1].status == -1) {
-    throw "已退票\n";
+    // throw "已退票\n";
     return false;
   }
   if (v[n - 1].status == 1) { // refund

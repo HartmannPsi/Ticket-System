@@ -139,7 +139,7 @@ void process(const std::string &input) {
     if (accounts.adduser(usr, psw, name, mail, cur_usr, priv)) {
       std::cout << "0\n";
     } else {
-      throw "-1: Failed to add user.\n";
+      std::cout << "-1\n";
     }
 
   } else if (cmd == "login") {
@@ -169,7 +169,7 @@ void process(const std::string &input) {
     if (accounts.login(usr, psw)) {
       std::cout << "0\n";
     } else {
-      throw "-1: Failed to login.\n";
+      std::cout << "-1\n";
     }
 
   } else if (cmd == "logout") {
@@ -181,7 +181,7 @@ void process(const std::string &input) {
     if (accounts.logout(usr)) {
       std::cout << "0\n";
     } else {
-      throw "-1: Failed to logout.\n";
+      std::cout << "-1\n";
     }
 
   } else if (cmd == "query_profile") {
@@ -208,12 +208,13 @@ void process(const std::string &input) {
     while (get_info())
       ;
 
-    const auto res = accounts.query(cur_usr, usr);
+    accounts.query(cur_usr, usr);
+    /*
     if (res == "") {
       throw "-1: Failed to query profile.\n";
     } else {
       std::cout << res << '\n';
-    }
+    }*/
 
   } else if (cmd == "modify_profile") {
 
@@ -255,7 +256,7 @@ void process(const std::string &input) {
     const auto res = accounts.modify(usr, psw, name, mail, cur_usr, priv);
 
     if (res == "") {
-      throw "-1: Failed to modify profile.\n";
+      std::cout << "-1\n";
     } else {
       std::cout << res << '\n'; // Hartmann_Psi
     }
@@ -344,7 +345,7 @@ void process(const std::string &input) {
       delete[] _travel_t;
       delete[] _stop_t;
       delete[] _stations;
-      throw "-1: Failed to add train.\n";
+      std::cout << "-1\n";
     }
 
     // delete[] _prices;
@@ -362,7 +363,7 @@ void process(const std::string &input) {
     if (trains.delete_train(id)) {
       std::cout << "0\n";
     } else {
-      throw "-1: Failed to delete train.\n";
+      std::cout << "-1\n";
     }
 
   } else if (cmd == "release_train") {
@@ -375,7 +376,7 @@ void process(const std::string &input) {
     if (trains.release_train(id)) {
       std::cout << "0\n";
     } else {
-      throw "-1: Failed to release train.\n";
+      std::cout << "-1\n";
     }
 
   } else if (cmd == "query_train") {
@@ -405,12 +406,12 @@ void process(const std::string &input) {
       ;
 
     if (day.mon < 6) {
-      throw "无效的时间\n";
+      std::cout << "-1\n";
     }
 
     const auto res = trains.query_train(id, int(day));
     if (res == "") {
-      throw "-1: Failed to query train.\n";
+      std::cout << "-1\n";
     } else {
       std::cout << res;
     }
@@ -453,7 +454,7 @@ void process(const std::string &input) {
       return;
     }
 
-    std::cout << trains.query_ticket(from, to, int(day), _tp);
+    trains.query_ticket(from, to, int(day), _tp);
 
   } else if (cmd == "query_transfer") {
 
@@ -551,7 +552,7 @@ void process(const std::string &input) {
       ;
 
     if (day.mon < 6) {
-      throw "无效的时间\n";
+      std::cout << "-1\n";
     }
 
     int time = std::stoi(time_stamp.substr(1, time_stamp.size() - 2));
@@ -564,7 +565,7 @@ void process(const std::string &input) {
     } else if (res == 0) {
       std::cout << "queue\n";
     } else { // res == -1
-      throw "-1: Failed to buy ticket.\n";
+      std::cout << "-1\n";
     }
 
   } else if (cmd == "query_order") {
@@ -581,7 +582,7 @@ void process(const std::string &input) {
     const auto res = trains.query_order(usr);
 
     if (res == "") {
-      throw "-1: Failed to query order.\n";
+      std::cout << "-1\n";
     } else {
       std::cout << res;
     }
@@ -618,7 +619,7 @@ void process(const std::string &input) {
     if (trains.refund_ticket(usr, n)) {
       std::cout << "0\n";
     } else {
-      throw "-1: Failed to refund ticket.\n";
+      std::cout << "-1\n";
     }
 
   } else if (cmd == "clean") {

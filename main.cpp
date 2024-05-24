@@ -16,29 +16,33 @@ int main() {
   std::cin.tie(nullptr);
   std::cout.tie(nullptr);
 #endif
-
+  std::string input;
   while (true) {
-    std::string input;
+
     std::getline(std::cin, input);
 
-    try {
-      process(input);
-    }
+    // try {
+    process(input);
+    //}
 #ifdef DEBUG
     catch (const std::string &str) {
       std::cout << "[Error] " << str;
-    } catch (const char *const str) {
+    }
+    catch (const char *const str) {
       std::cout << "[Error] " << str;
-    } catch (...) {
+    }
+    catch (...) {
       std::cout << "[Error] Unknown Exception.\n";
     }
 #endif
+    /*
 #ifndef DEBUG
     catch (...) {
       std::cout << "-1\n";
     }
 
 #endif
+    */
   }
 
   return 0;
