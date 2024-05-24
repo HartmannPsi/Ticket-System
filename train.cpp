@@ -368,10 +368,10 @@ vector<std::string> BPlusTree<Station, 113>::find_trains(const Station &ind) {
   return _res;
 }
 
-vector<std::string> TrSys::get_intersection(const vector<std::string> &v1,
-                                            const vector<std::string> &v2) {
+vector<int> TrSys::get_intersection(const vector<std::string> &v1,
+                                    const vector<std::string> &v2) {
 
-  vector<std::string> res;
+  vector<int> res;
   if (v1.empty() || v2.empty()) {
     return res;
   }
@@ -384,7 +384,7 @@ vector<std::string> TrSys::get_intersection(const vector<std::string> &v1,
       break;
     }
     if (v1[i] == v2[j]) {
-      res.push_back(v1[i]);
+      res.push_back(i);
       ++i;
       if (i == v1.size()) {
         break;
@@ -397,7 +397,7 @@ vector<std::string> TrSys::get_intersection(const vector<std::string> &v1,
       break;
     }
     if (v1[i] == v2[j]) {
-      res.push_back(v1[i]);
+      res.push_back(i);
       ++j;
       if (j == v2.size()) {
         break;
@@ -468,10 +468,10 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
     // auto &id = res[i];
     Train train;
     Info tmp_info;
-    strcpy(train.id, train_ids[i].c_str());
+    strcpy(train.id, from_train_ids[train_ids[i]].c_str());
     train_data.at(train);
     EveryTr tr;
-    strcpy(tr.id, train_ids[i].c_str());
+    strcpy(tr.id, from_train_ids[train_ids[i]].c_str());
 
     // if (!(train.released && train.start_sale <= day && day <=
     // train.end_sale)) {
@@ -484,7 +484,7 @@ std::string TrSys::query_ticket(const std::string &from, const std::string &to,
       // }
       continue;
     }
-    tmp_info.id = train_ids[i];
+    tmp_info.id = from_train_ids[train_ids[i]];
     Time time(day + train.start_t);
 
     // while (time.stamp() < day) {

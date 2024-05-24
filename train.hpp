@@ -661,8 +661,8 @@ public:
 
   int max_seat(const EveryTr &t, int from_serial, int to_serial);
 
-  vector<std::string> get_intersection(const vector<std::string> &v1,
-                                       const vector<std::string> &v2);
+  vector<int> get_intersection(const vector<std::string> &v1,
+                               const vector<std::string> &v2);
 
   // void traverse_everytr() { every_train.traverse(); }
   /*
