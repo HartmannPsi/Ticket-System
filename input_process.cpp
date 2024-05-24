@@ -407,6 +407,7 @@ void process(const std::string &input) {
 
     if (day.mon < 6) {
       std::cout << "-1\n";
+      return;
     }
 
     const auto res = trains.query_train(id, int(day));
@@ -553,6 +554,7 @@ void process(const std::string &input) {
 
     if (day.mon < 6) {
       std::cout << "-1\n";
+      return;
     }
 
     int time = std::stoi(time_stamp.substr(1, time_stamp.size() - 2));
