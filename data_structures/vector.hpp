@@ -1,7 +1,7 @@
 #ifndef SJTU_VECTOR_HPP
 #define SJTU_VECTOR_HPP
 
-#include <cstddef>
+//#include <cstddef>
 #include <cstring>
 #include <string>
 //#include <vector>

@@ -1,15 +1,8 @@
 testcases_bpt/
 build/
 testcases/
-clear
-utf_test.cpp
 code
 simple_testcases/
 run-test
-bpt_old.hpp
-bpt_new.hpp
 test_logs/
-sort_test.cpp
-test
-test_intersect.cpp
 backup/

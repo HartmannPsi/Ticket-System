@@ -2,8 +2,8 @@
 #ifndef ACCOUNT_HPP
 #define ACCOUNT_HPP
 
-#include "base.hpp"
-#include "bpt.hpp"
+#include "../data_structures/base.hpp"
+#include "../data_structures/bpt.hpp"
 #include <iostream>
 
 struct Account { // M = 73

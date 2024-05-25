@@ -2,12 +2,12 @@
 #ifndef TRAIN_HPP
 #define TRAIN_HPP
 
+#include "../data_structures/base.hpp"
+#include "../data_structures/bpt.hpp"
+#include "../data_structures/map.hpp"
+#include "../data_structures/vector.hpp"
 #include "account.hpp"
-#include "base.hpp"
-#include "bpt.hpp"
-#include "map.hpp"
 #include "time.hpp"
-#include "vector.hpp"
 #include <cstdint>
 #include <fstream>
 
