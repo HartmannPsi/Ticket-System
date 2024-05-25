@@ -600,10 +600,10 @@ public:
   }
 };
 
-constexpr int M = 169; // M should be odd (101)
+constexpr int M = 101; // M should be odd (101)
 
 struct Node {
-  Station index[M];
+  Index index[M];
   u32 child[M];
   int size = 0;
   bool is_leaf = false;
