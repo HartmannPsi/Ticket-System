@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-using std::vector;
-/*
+// using std::vector;
+
 namespace sjtu {
 
 class exception {
@@ -21,27 +21,17 @@ public:
   virtual std::string what() { return variant + " " + detail; }
 };
 
-class index_out_of_bound : public exception {
+class index_out_of_bound : public exception {};
 
-};
+class runtime_error : public exception {};
 
-class runtime_error : public exception {
+class invalid_iterator : public exception {};
 
-};
-
-class invalid_iterator : public exception {
-
-};
-
-class container_is_empty : public exception {
-
-};
+class container_is_empty : public exception {};
 } // namespace sjtu
-
 
 template <typename T> class vector {
 public:
-
   class const_iterator;
   class iterator {
     // The following code is written for the C++ type_traits library.
@@ -535,6 +525,5 @@ private:
     delete[] tmp;
   }
 };
-*/
 
 #endif
