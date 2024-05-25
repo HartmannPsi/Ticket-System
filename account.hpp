@@ -193,7 +193,7 @@ public:
 };
 
 class AcSys {
-  BPlusTree<Account, 35> data;     // it should be 73
+  Base<Account> data;              // it should be 73
   map<std::string, int> log_table; // string: username, int: privilege
 
 public:
@@ -222,7 +222,7 @@ public:
 
   void clear();
 
-  void traverse() { data.traverse(); }
+  // void traverse() { data.traverse(); }
 };
 
 #endif
