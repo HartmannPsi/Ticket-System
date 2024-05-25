@@ -176,7 +176,7 @@ template <typename Key, const int M> class BPlusTree {
 
 public:
   BPlusTree(const std::string &index_file, const std::string &r,
-            int _CACHE = 512, u32 _BLOCK = 4096);
+            int _CACHE = 256, u32 _BLOCK = 4096);
 
   ~BPlusTree();
 
